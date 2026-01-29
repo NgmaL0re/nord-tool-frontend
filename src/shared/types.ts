@@ -1,17 +1,3 @@
-export interface Apartamento {
-  id: number;
-  dia_semana: string;
-  data: string;
-  horario: string;
-  apartamento: string;
-  vistoria: string | null;
-  vistoria_data: string | null;
-  status: 'liberado' | 'aprovado' | 'reprovado' | 'pendente' | 'agendado';
-  observacao: string | null;
-  created_at: string;
-  updated_at: string;
-}
-
 export interface DashboardStats {
   total: number;
   total_cadastrados: number;
@@ -29,4 +15,40 @@ export interface Configuracao {
   valor: string;
   created_at: string;
   updated_at: string;
+}
+
+export interface ApartamentoVistoriaDto {
+  idApartamentoVistoria: number;
+  nmApartamentoVistoria: string;
+  idDiaSemana: number;
+  nmDiaSemana?: string;
+  dtApartamentoVigente?: string;
+  nmHorarioVistoria?: string;
+  idStatusVistoria: number;
+  nmStatusVistoria: string;
+  inMarcarRevistoria?: boolean;
+  txObservacaoRevistoria?: string;
+  dtRevistoriaVigente?: string;
+}
+
+export interface ApartamentoVistoriaForm {
+  idApartamentoVistoria?: number;
+  nmApartamentoVistoria: string;
+  idDiaSemana: number;
+  dtApartamentoVigente?: string;
+  nmHorarioVistoria?: string;
+  idStatusVistoria: number;
+  inMarcarRevistoria?: boolean;
+  txObservacaoRevistoria?: string;
+  dtRevistoriaVigente?: string;
+}
+
+export interface DiaSemanaDto {
+  idDiaSemana: number;
+  nmDiaSemana: string;
+}
+
+export interface StatusVistoriaDto {
+  idStatusVistoria: number;
+  nmStatusVistoria: string;
 }
