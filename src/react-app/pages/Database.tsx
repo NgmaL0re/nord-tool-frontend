@@ -1,19 +1,11 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
-  Download,
   Loader2,
   Edit2,
   Upload,
   Trash2,
   Search,
-  Filter,
-  RotateCcw,
-  MoreVertical,
-  Trash,
-  ChevronUp,
-  ChevronDown,
 } from "lucide-react";
-import * as XLSX from "xlsx";
 
 import ApartmentModal from "@/react-app/components/ApartmentModal";
 
@@ -39,23 +31,18 @@ export default function DatabasePage() {
   const [showModal, setShowModal] = useState(false);
 
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
-  const [isDeletingBatch, setIsDeletingBatch] = useState(false);
 
   const [searchTerm, setSearchTerm] = useState("");
   const [mostrarTodos, setMostrarTodos] = useState(false);
 
-  const [sortConfig, setSortConfig] = useState<{
+  const [sortConfig] = useState<{
     key: keyof ApartamentoVistoriaDto;
     direction: "asc" | "desc";
   } | null>(null);
 
-  const [activeFilterMenu, setActiveFilterMenu] = useState<string | null>(null);
-  const [columnFilters, setColumnFilters] = useState<Record<string, string>>({
+  const [columnFilters] = useState<Record<string, string>>({
     idStatusVistoria: "",
   });
-
-  const [showOptionsMenu, setShowOptionsMenu] = useState(false);
-  const [importing, setImporting] = useState(false);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -156,39 +143,6 @@ export default function DatabasePage() {
     );
   };
 
-  const handleDeleteBatch = async () => {
-    if (!confirm(`Excluir ${selectedIds.size} registros?`)) return;
-
-    setIsDeletingBatch(true);
-    try {
-      await Promise.all(
-        Array.from(selectedIds).map((id) => apartamentoVistoriaService.deletar(id))
-      );
-      setApartamentos((prev) =>
-        prev.filter((a) => !selectedIds.has(a.idApartamentoVistoria!))
-      );
-      setSelectedIds(new Set());
-    } finally {
-      setIsDeletingBatch(false);
-    }
-  };
-
-  const handleFileImport = async (
-    e: React.ChangeEvent<HTMLInputElement>
-  ) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    setImporting(true);
-    try {
-      await apartamentoVistoriaService.importar(file);
-      await fetchApartamentos();
-    } finally {
-      setImporting(false);
-      setShowOptionsMenu(false);
-    }
-  };
-
   const handleSaveApartment = async (data: ApartamentoVistoriaForm) => {
     if (data.idApartamentoVistoria) {
       await apartamentoVistoriaService.editar(data);
@@ -225,13 +179,6 @@ export default function DatabasePage() {
         <button onClick={() => fileInputRef.current?.click()}>
           <Upload className="w-4 h-4" /> Importar
         </button>
-
-        <input
-          ref={fileInputRef}
-          type="file"
-          className="hidden"
-          onChange={handleFileImport}
-        />
       </div>
 
       {/* tabela */}
