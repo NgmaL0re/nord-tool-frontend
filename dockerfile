@@ -1,5 +1,5 @@
 # =========================
-# 1️⃣ Stage de build
+# 1️⃣ Stage de build dk
 # =========================
 FROM node:20-alpine AS builder
 
