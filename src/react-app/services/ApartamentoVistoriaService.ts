@@ -4,7 +4,7 @@ import type {
 } from "@/shared/types";
 
 const BASE_URL =
-  "https://nordtoolbackend-develop.up.railway.app/api/v1/nord-tool/apartamentoVistoria";
+  "https://glorious-fiesta-7wj5gxggjwjhx95q-8081.app.github.dev/api/v1/nord-tool/apartamentoVistoria";
 
 export const apartamentoVistoriaService = {
   /* =========================
