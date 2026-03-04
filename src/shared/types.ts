@@ -20,12 +20,16 @@ export interface Configuracao {
 export interface ApartamentoVistoriaDto {
   idApartamentoVistoria: number;
   nmApartamentoVistoria: string;
-  idDiaSemana: number;
+  idDiaSemana?: number;
   nmDiaSemana?: string;
+  
+  // Nick, adicionei o dtVistoria aqui, que é o campo real do seu banco!
+  dtVistoria?: string; 
+  
   dtApartamentoVigente?: string;
   nmHorarioVistoria?: string;
-  idStatusVistoria: number;
-  nmStatusVistoria: string;
+  idStatusVistoria?: number;
+  nmStatusVistoria?: string;
   inMarcarRevistoria?: boolean;
   txObservacaoRevistoria?: string;
   dtRevistoriaVigente?: string;
@@ -35,6 +39,10 @@ export interface ApartamentoVistoriaForm {
   idApartamentoVistoria?: number;
   nmApartamentoVistoria: string;
   idDiaSemana: number;
+  
+  // Incluindo aqui também para o formulário se necessário
+  dtVistoria?: string; 
+  
   dtApartamentoVigente?: string;
   nmHorarioVistoria?: string;
   idStatusVistoria: number;
