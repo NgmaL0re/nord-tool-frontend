@@ -6,7 +6,7 @@ import {
   Home,
   ClipboardCheck,
 } from "lucide-react";
-import { format } from "date-fns";
+import { format, parseISO, isValid } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { ApartamentoVistoriaDto } from "@/shared/types";
 
@@ -21,10 +21,12 @@ export default function ApartmentCard({
   onEdit,
   onDelete,
 }: ApartmentCardProps) {
+  // Nick, aqui está o segredo: desestruturamos incluindo o dtVistoria do banco
   const {
     idApartamentoVistoria,
     nmApartamentoVistoria,
     nmDiaSemana,
+    dtVistoria, // Campo real do banco
     dtApartamentoVigente,
     nmHorarioVistoria,
     nmStatusVistoria,
@@ -33,7 +35,8 @@ export default function ApartmentCard({
     txObservacaoRevistoria,
   } = apartment;
 
-  const statusKey = nmStatusVistoria
+  // Lugia: Proteção contra status nulo para não explodir o toLowerCase()
+  const statusKey = (nmStatusVistoria || "pendente")
     .toLowerCase()
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "")
@@ -52,21 +55,31 @@ export default function ApartmentCard({
       case "agendado":
         return "from-purple-500 to-purple-600";
       default:
-        return "from-gray-500 to-gray-600";
+        return "from-slate-500 to-slate-600";
     }
   };
 
-  const dataExibicao = dtRevistoriaVigente || dtApartamentoVigente;
+  // Prioridade de exibição da data: Revistoria > Vistoria do Banco > Vigente
+  const dataExibicao = dtRevistoriaVigente || dtVistoria || dtApartamentoVigente;
 
-  const formatDate = (date?: string | null) =>
-    date
-      ? format(new Date(date + "T00:00:00"), "dd/MM/yyyy", {
-          locale: ptBR,
-        })
-      : "-";
+  const formatDate = (dateValue?: string | null) => {
+    if (!dateValue) return "-";
+    
+    try {
+      // Nick, o parseISO lida melhor com as strings que vem do banco (YYYY-MM-DD...)
+      const cleanDate = dateValue.split('T')[0];
+      const date = parseISO(cleanDate);
+      
+      return isValid(date) 
+        ? format(date, "dd/MM/yyyy", { locale: ptBR }) 
+        : "-";
+    } catch {
+      return "-";
+    }
+  };
 
   return (
-    <div className="bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
+    <div className="bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 border border-slate-100">
       {/* Header */}
       <div
         className={`bg-gradient-to-r ${getStatusColor(
@@ -76,11 +89,11 @@ export default function ApartmentCard({
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2 text-white">
             <Home className="w-5 h-5" />
-            <h3 className="text-lg font-bold">{nmApartamentoVistoria}</h3>
+            <h3 className="text-lg font-bold">{nmApartamentoVistoria || "Sem Identificação"}</h3>
           </div>
 
-          <span className="px-3 py-1 bg-white/20 rounded-full text-xs font-semibold text-white uppercase">
-            {nmStatusVistoria}
+          <span className="px-3 py-1 bg-white/20 rounded-full text-[10px] font-bold text-white uppercase tracking-wider">
+            {nmStatusVistoria || "Pendente"}
           </span>
         </div>
       </div>
@@ -90,9 +103,9 @@ export default function ApartmentCard({
         <div className="flex items-center gap-3 text-slate-700">
           <Calendar className="w-5 h-5 text-slate-400" />
           <div>
-            <p className="text-xs text-slate-500">Data e Dia</p>
-            <p className="font-semibold">
-              {nmDiaSemana} - {formatDate(dataExibicao)}
+            <p className="text-[10px] font-bold text-slate-400 uppercase">Data e Dia</p>
+            <p className="font-semibold text-sm">
+              {nmDiaSemana || "Dia não inf."} - {formatDate(dataExibicao)}
             </p>
           </div>
         </div>
@@ -100,54 +113,54 @@ export default function ApartmentCard({
         <div className="flex items-center gap-3 text-slate-700">
           <Clock className="w-5 h-5 text-slate-400" />
           <div>
-            <p className="text-xs text-slate-500">Horário</p>
-            <p className="font-semibold">{nmHorarioVistoria}</p>
+            <p className="text-[10px] font-bold text-slate-400 uppercase">Horário</p>
+            <p className="font-semibold text-sm">{nmHorarioVistoria || "--:--"}</p>
           </div>
         </div>
 
         {dtRevistoriaVigente && (
-          <div className="flex items-center gap-3 text-slate-700 bg-blue-50 p-3 rounded-lg">
+          <div className="flex items-center gap-3 text-slate-700 bg-blue-50/50 p-3 rounded-lg border border-blue-100">
             <ClipboardCheck className="w-5 h-5 text-blue-500" />
             <div>
-              <p className="text-xs text-slate-500 mb-1">Revistoria</p>
-              <p className="text-sm font-medium">
+              <p className="text-[10px] font-bold text-blue-400 uppercase mb-1">Revistoria</p>
+              <p className="text-xs font-bold text-blue-700">
                 {inMarcarRevistoria
                   ? "Revistoria marcada"
                   : "Revistoria informada"}
               </p>
-              <p className="text-xs text-slate-500 mt-1">
-                Data original: {formatDate(dtApartamentoVigente)}
+              <p className="text-[10px] text-blue-500 mt-1">
+                Original: {formatDate(dtVistoria || dtApartamentoVigente)}
               </p>
             </div>
           </div>
         )}
 
         {txObservacaoRevistoria && (
-          <div className="border-t pt-4">
-            <p className="text-xs text-slate-500 mb-1">Observação</p>
-            <p className="text-sm text-slate-700">
-              {txObservacaoRevistoria}
+          <div className="border-t border-slate-100 pt-4">
+            <p className="text-[10px] font-bold text-slate-400 uppercase mb-1">Observação</p>
+            <p className="text-xs text-slate-600 leading-relaxed italic">
+              "{txObservacaoRevistoria}"
             </p>
           </div>
         )}
       </div>
 
       {/* Actions */}
-      <div className="px-6 py-4 bg-slate-50 flex gap-2">
+      <div className="px-6 py-4 bg-slate-50/80 flex gap-2 border-t border-slate-100">
         <button
           onClick={() => onEdit(apartment)}
-          className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-white border border-slate-300 rounded-lg hover:bg-slate-100"
+          className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-white border border-slate-200 text-slate-600 rounded-lg hover:bg-slate-50 hover:border-blue-300 hover:text-blue-600 transition-all shadow-sm"
         >
-          <Edit2 className="w-4 h-4" />
-          <span className="text-sm font-medium">Editar</span>
+          <Edit2 className="w-3.5 h-3.5" />
+          <span className="text-xs font-bold">Editar</span>
         </button>
 
         <button
           onClick={() => onDelete(idApartamentoVistoria)}
-          className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-white border border-red-300 text-red-600 rounded-lg hover:bg-red-50"
+          className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-white border border-slate-200 text-slate-400 rounded-lg hover:bg-red-50 hover:border-red-200 hover:text-red-500 transition-all shadow-sm"
         >
-          <Trash2 className="w-4 h-4" />
-          <span className="text-sm font-medium">Excluir</span>
+          <Trash2 className="w-3.5 h-3.5" />
+          <span className="text-xs font-bold">Excluir</span>
         </button>
       </div>
     </div>
