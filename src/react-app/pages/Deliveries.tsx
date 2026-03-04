@@ -1,8 +1,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { useOutletContext } from "react-router"; 
 import { Plus, Loader2, Calendar, AlertCircle } from "lucide-react";
-import { format, parseISO, isValid, startOfWeek, endOfWeek, addDays, startOfDay } from "date-fns";
-import { ptBR } from "date-fns/locale";
+import { format, parseISO, isValid, startOfWeek, endOfWeek} from "date-fns";
 
 import type { ApartamentoVistoriaDto } from "@/shared/types";
 import { apartamentoVistoriaService } from "@/react-app/services/ApartamentoVistoriaService";
