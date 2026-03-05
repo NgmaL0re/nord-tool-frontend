@@ -1,7 +1,8 @@
 import { useState, useEffect, useMemo } from "react";
 import { useOutletContext } from "react-router"; 
-import { Plus, Loader2, Calendar, AlertCircle } from "lucide-react";
+import { Plus, Loader2, Calendar, AlertCircle, ChevronDown, ChevronUp } from "lucide-react";
 import { format, parseISO, isValid, startOfWeek, endOfWeek} from "date-fns";
+import { ptBR } from "date-fns/locale";
 
 import type { ApartamentoVistoriaDto } from "@/shared/types";
 import { apartamentoVistoriaService } from "@/react-app/services/ApartamentoVistoriaService";
@@ -9,7 +10,10 @@ import ApartmentCard from "@/react-app/components/ApartmentCard";
 import ApartmentModal from "@/react-app/components/ApartmentModal";
 
 export default function DeliveriesPage() {
-  const { sidebarOpen } = useOutletContext<{ sidebarOpen: boolean }>();
+  // Correção: Acessa o contexto de forma segura para evitar crash (tela branca)
+  // se a página for renderizada fora do Layout principal por engano na configuração de rotas.
+  const outletContext = useOutletContext<{ sidebarOpen: boolean }>();
+  const sidebarOpen = outletContext?.sidebarOpen ?? false;
   
   const [activeTab, setActiveTab] = useState<"current" | "next" | "all">("current");
   const [filterNord, setFilterNord] = useState<"Nord 1" | "Nord 2" | null>(null);
@@ -17,6 +21,7 @@ export default function DeliveriesPage() {
   const [loading, setLoading] = useState(true);
   const [modalOpen, setModalOpen] = useState(false);
   const [editingApartment, setEditingApartment] = useState<ApartamentoVistoriaDto | null>(null);
+  const [collapsedDates, setCollapsedDates] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
     fetchApartamentos();
@@ -26,8 +31,8 @@ export default function DeliveriesPage() {
     try {
       setLoading(true);
       const data = await apartamentoVistoriaService.listar();
-      const listaFinal = Array.isArray(data) ? data : (data as any)?.body || [];
-      setApartamentos(listaFinal);
+      // Unificando a forma de carregar os dados, igual à página de Database
+      setApartamentos(data || []);
     } catch (error) {
       console.error("Erro ao carregar:", error);
     } finally {
@@ -35,39 +40,68 @@ export default function DeliveriesPage() {
     }
   }
 
+  const handleDelete = async (id: number) => {
+    if (!window.confirm("Tem certeza que deseja excluir este registro?")) return;
+    try {
+      await apartamentoVistoriaService.deletar(id);
+      await fetchApartamentos();
+    } catch (error) {
+      console.error("Erro ao excluir:", error);
+      alert("Não foi possível excluir o registro.");
+    }
+  };
+
+  // Função auxiliar para normalizar datas (lida com YYYY-MM-DD e DD/MM/YYYY)
+  const getNormalizedDate = (apt: any) => {
+    const raw = apt.dtVistoria || apt.dtApartamentoVigente || apt.dtRevistoriaVigente;
+    if (!raw) return null;
+    const s = String(raw);
+    if (s.includes('T')) return s.split('T')[0];
+    if (s.includes('/')) {
+      const parts = s.split('/');
+      if (parts.length === 3) return `${parts[2]}-${parts[1]}-${parts[0]}`;
+    }
+    return s.substring(0, 10);
+  };
+
  const groupedApartments = useMemo(() => {
-    // 1. Pegamos os limites da semana como strings puras "YYYY-MM-DD"
     const hoje = new Date();
-    const startCur = format(startOfWeek(hoje, { weekStartsOn: 0 }), "yyyy-MM-dd");
-    const endCur = format(endOfWeek(hoje, { weekStartsOn: 0 }), "yyyy-MM-dd");
+    // Corrigido para a semana começar na Segunda-feira, comum no Brasil
+    const startCur = format(startOfWeek(hoje, { weekStartsOn: 1 }), "yyyy-MM-dd");
+    const endCur = format(endOfWeek(hoje, { weekStartsOn: 1 }), "yyyy-MM-dd");
 
-    // 2. Filtramos exatamente como na aba "Tudo", mas com a trava de data
+    const proximaSemana = new Date(hoje.getFullYear(), hoje.getMonth(), hoje.getDate() + 7);
+    const startNext = format(startOfWeek(proximaSemana, { weekStartsOn: 1 }), "yyyy-MM-dd");
+    const endNext = format(endOfWeek(proximaSemana, { weekStartsOn: 1 }), "yyyy-MM-dd");
+
     const filtered = apartamentos.filter((apt: any) => {
-      // Filtro de Nord (Igual ao "Tudo")
+      // Filtro de Nord (comum a todas as abas)
       const nomeApt = apt.nmApartamentoVistoria?.toUpperCase() || "";
-      if (filterNord && !nomeApt.includes(filterNord.toUpperCase())) return false;
+      if (filterNord && !nomeApt.startsWith(filterNord === 'Nord 1' ? 'N1' : 'N2')) return false;
       
-      // Se for "Tudo", passa direto. Se não, checa a data.
-      if (activeTab === "all") return true;
+      const isoDate = getNormalizedDate(apt);
 
-      if (activeTab === "current") {
-        const rawDate = apt.dtVistoria || apt.dtApartamentoVigente || apt.dtRevistoriaVigente;
-        if (!rawDate) return false;
-
-        // Pegamos apenas "YYYY-MM-DD" da string do banco
-        const aptDateStr = String(rawDate).substring(0, 10);
-        
-        // Se a data do apt está entre o início e fim da semana (ex: "2026-03-02")
-        return aptDateStr >= startCur && aptDateStr <= endCur;
+      // Aba "Tudo" mostra todos, sem filtro de data ou status (além do Nord)
+      if (activeTab === "all") {
+        return true;
       }
 
-      return true;
+      // Para as abas de semana, precisamos de uma data
+      if (!isoDate) return false;
+
+      if (activeTab === "current") {
+        return isoDate >= startCur && isoDate <= endCur;
+      }
+
+      if (activeTab === "next") {
+        return isoDate >= startNext && isoDate <= endNext;
+      }
+
+      return false; // Não deve acontecer se activeTab for um dos 3 valores
     });
 
-    // 3. Agrupamento (Idêntico ao que você já tinha, mas com SORT garantido)
     const groups = filtered.reduce<Record<string, ApartamentoVistoriaDto[]>>((acc, apt: any) => {
-      const rawDate = apt.dtVistoria || apt.dtApartamentoVigente || "Sem Data";
-      const key = typeof rawDate === 'string' ? rawDate.substring(0, 10) : "Sem Data";
+      const key = getNormalizedDate(apt) || "Sem Data";
       if (!acc[key]) acc[key] = [];
       acc[key].push(apt);
       return acc;
@@ -77,7 +111,11 @@ export default function DeliveriesPage() {
     const sortedKeys = Object.keys(groups).sort();
     const sortedGroups: Record<string, ApartamentoVistoriaDto[]> = {};
     sortedKeys.forEach(key => {
-      sortedGroups[key] = groups[key];
+      sortedGroups[key] = groups[key].sort((a, b) => {
+        const timeA = a.nmHorarioVistoria || "";
+        const timeB = b.nmHorarioVistoria || "";
+        return timeA.localeCompare(timeB);
+      });
     });
 
     return sortedGroups;
@@ -87,9 +125,21 @@ export default function DeliveriesPage() {
     return <div className="flex items-center justify-center h-full"><Loader2 className="w-8 h-8 animate-spin text-blue-500" /></div>;
   }
 
+  const today = format(new Date(), "yyyy-MM-dd");
+
+  const toggleDate = (date: string) => {
+    setCollapsedDates(prev => {
+      const isPast = date < today;
+      const isCurrentTab = activeTab === "current";
+      // Se não tiver no estado, assume o padrão (past && current = collapsed)
+      const currentCollapsed = prev[date] ?? (isCurrentTab && isPast);
+      return { ...prev, [date]: !currentCollapsed };
+    });
+  };
+
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+      <div className="flex flex-wrap items-center gap-4 w-full">
         <div className={`flex flex-wrap items-center gap-4 transition-all duration-300 ${!sidebarOpen ? 'pl-16' : 'pl-0'}`}>
           <h2 className="text-3xl font-bold text-slate-800 tracking-tight">Entregas</h2>
           
@@ -120,7 +170,7 @@ export default function DeliveriesPage() {
 
         <button 
           onClick={() => { setEditingApartment(null); setModalOpen(true); }} 
-          className="flex items-center gap-2 px-5 py-2.5 bg-blue-600 text-white rounded-xl font-bold text-sm shadow-md hover:bg-blue-700 transition-all"
+          className="flex items-center gap-2 px-5 py-2.5 bg-blue-600 text-white rounded-xl font-bold text-sm shadow-md hover:bg-blue-700 transition-all ml-auto"
         >
           <Plus className="w-5 h-5" /> Novo Apartamento
         </button>
@@ -137,29 +187,48 @@ export default function DeliveriesPage() {
             let displayDate = dateKey;
             try {
               const parsed = parseISO(dateKey);
-              if (isValid(parsed)) displayDate = format(parsed, "dd/MM/yyyy");
+              if (isValid(parsed)) {
+                const diaSemana = format(parsed, "EEEE", { locale: ptBR });
+                const diaFormatado = diaSemana.charAt(0).toUpperCase() + diaSemana.slice(1);
+                displayDate = `${diaFormatado}, ${format(parsed, "dd/MM/yyyy")}`;
+              }
             } catch (e) { }
 
+            const count = list.length;
+            displayDate += ` (${count} ${count === 1 ? "Entrega" : "Entregas"})`;
+
+            const isPast = dateKey < today;
+            const isCurrentTab = activeTab === "current";
+            const isCollapsed = collapsedDates[dateKey] ?? (isCurrentTab && isPast);
+            const isTranslucent = isCurrentTab && isPast;
+
             return (
-              <section key={dateKey} className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-                <div className="flex items-center justify-between p-5 bg-slate-50/50 border-b border-slate-100">
+              <section key={dateKey} className={`rounded-2xl border border-slate-200 shadow-sm overflow-hidden transition-all ${isTranslucent ? "bg-slate-50/80" : "bg-white"}`}>
+                <div 
+                  className={`flex items-center justify-between p-5 border-b border-slate-100 cursor-pointer hover:bg-slate-50 transition-colors ${isTranslucent ? "opacity-60" : ""}`}
+                  onClick={() => toggleDate(dateKey)}
+                >
                   <div className="flex items-center gap-3">
-                    <div className="p-2 bg-blue-50 text-blue-600 rounded-lg">
+                    <div className={`p-2 rounded-lg ${isTranslucent ? "bg-slate-200 text-slate-500" : "bg-blue-50 text-blue-600"}`}>
                       <Calendar className="w-5 h-5" />
                     </div>
-                    <h3 className="font-bold text-slate-800">{displayDate}</h3>
+                    <h3 className={`font-bold ${isTranslucent ? "text-slate-500" : "text-slate-800"}`}>{displayDate}</h3>
                   </div>
+                  {isCollapsed ? <ChevronDown className="w-5 h-5 text-slate-400" /> : <ChevronUp className="w-5 h-5 text-slate-400" />}
                 </div>
-                <div className="p-5 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                
+                {!isCollapsed && (
+                <div className={`p-5 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 ${isTranslucent ? "opacity-50 grayscale-[0.3]" : ""}`}>
                   {list.map((apt) => (
                     <ApartmentCard 
                       key={apt.idApartamentoVistoria} 
                       apartment={apt} 
                       onEdit={(a) => { setEditingApartment(a); setModalOpen(true); }} 
-                      onDelete={fetchApartamentos} 
+                      onDelete={handleDelete} 
                     />
                   ))}
                 </div>
+                )}
               </section>
             );
           })

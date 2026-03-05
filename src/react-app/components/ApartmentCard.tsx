@@ -67,7 +67,14 @@ export default function ApartmentCard({
     
     try {
       // Nick, o parseISO lida melhor com as strings que vem do banco (YYYY-MM-DD...)
-      const cleanDate = dateValue.split('T')[0];
+      let cleanDate = dateValue.split('T')[0];
+      
+      // Se vier DD/MM/YYYY, converte para YYYY-MM-DD para o parseISO entender
+      if (cleanDate.includes('/')) {
+        const parts = cleanDate.split('/');
+        if (parts.length === 3) cleanDate = `${parts[2]}-${parts[1]}-${parts[0]}`;
+      }
+
       const date = parseISO(cleanDate);
       
       return isValid(date) 
@@ -156,7 +163,12 @@ export default function ApartmentCard({
         </button>
 
         <button
-          onClick={() => onDelete(idApartamentoVistoria)}
+          onClick={() => {
+            // Garantimos que o ID existe antes de tentar excluir.
+            if (idApartamentoVistoria) {
+              onDelete(idApartamentoVistoria);
+            }
+          }}
           className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-white border border-slate-200 text-slate-400 rounded-lg hover:bg-red-50 hover:border-red-200 hover:text-red-500 transition-all shadow-sm"
         >
           <Trash2 className="w-3.5 h-3.5" />
