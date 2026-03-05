@@ -42,7 +42,7 @@ export default function Layout() {
               <NavLink
                 key={item.path}
                 to={item.path}
-                end={item.path === "/"}
+                end
                 onClick={() => setSidebarOpen(false)}
                 className={({ isActive }) =>
                   `flex items-center gap-3 px-4 py-3 mb-2 rounded-lg transition-all duration-200 ${

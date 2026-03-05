@@ -20,7 +20,10 @@ import { apartamentoVistoriaService } from "@/react-app/services/ApartamentoVist
 import type { ApartamentoVistoriaDto } from "@/shared/types";
 
 export default function DatabasePage() {
-  const { sidebarOpen } = useOutletContext<{ sidebarOpen: boolean }>();
+  // Correção: Acessa o contexto de forma segura para evitar crash (tela branca)
+  // se a página for renderizada fora do Layout principal por engano na configuração de rotas.
+  const outletContext = useOutletContext<{ sidebarOpen: boolean }>();
+  const sidebarOpen = outletContext?.sidebarOpen ?? false;
 
   /* =======================
       STATES
@@ -34,10 +37,10 @@ export default function DatabasePage() {
   const [nordSelecionado, setNordSelecionado] = useState<"N1" | "N2" | null>(null);
   const [showExcelMenu, setShowExcelMenu] = useState(false);
 
-  const [colFilters, setColFilters] = useState({ apartamento: "", status: "Agendado", data: "", horario: "" });
+  const [colFilters, setColFilters] = useState({ apartamento: "", status: ["Agendado", "Pendente"], data: "", horario: "" });
   const [visibleFilters, setVisibleFilters] = useState({ apartamento: false, status: false, data: false, horario: false });
   
-  const [sortConfig, setSortConfig] = useState<{ key: keyof ApartamentoVistoriaDto | null, direction: 'asc' | 'desc' }>({ key: null, direction: 'asc' });
+  const [sortConfig, setSortConfig] = useState<{ key: keyof ApartamentoVistoriaDto | null, direction: 'asc' | 'desc' }>({ key: 'dtApartamentoVigente', direction: 'asc' });
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -150,6 +153,17 @@ export default function DatabasePage() {
     setShowModal(true);
   };
 
+  const handleDelete = async (id: number) => {
+    if (!window.confirm("Tem certeza que deseja excluir este registro?")) return;
+    try {
+      await apartamentoVistoriaService.deletar(id);
+      await fetchApartamentos();
+    } catch (error) {
+      console.error("Erro ao excluir:", error);
+      alert("Não foi possível excluir o registro.");
+    }
+  };
+
   const handleSaveApartment = async () => {
     setShowModal(false);
     setSelectedApartment(null);
@@ -196,7 +210,7 @@ export default function DatabasePage() {
       }
       
       if (colFilters.apartamento && !apt.nmApartamentoVistoria?.toLowerCase().includes(colFilters.apartamento.toLowerCase())) return false;
-      if (colFilters.status && !statusApt.includes(colFilters.status.toLowerCase())) return false;
+      if (colFilters.status.length > 0 && !colFilters.status.some(s => statusApt.includes(s.toLowerCase()))) return false;
       
       if (colFilters.data) {
         const dataApt = apt.dtApartamentoVigente?.split('T')[0]; 
@@ -253,7 +267,7 @@ export default function DatabasePage() {
           <button onClick={() => { 
             setSearchTerm(""); 
             setNordSelecionado(null); 
-            setColFilters({apartamento:"", status:"", data:"", horario: ""}); 
+            setColFilters({apartamento:"", status: [], data:"", horario: ""}); 
             setVisibleFilters({apartamento:false, status:false, data:false, horario: false});
             setSortConfig({ key: null, direction: 'asc' });
           }} className="p-2 text-red-600 bg-white border border-slate-200 rounded-xl hover:bg-red-50 shadow-sm"><RotateCcw className="w-4 h-4" /></button>
@@ -315,17 +329,28 @@ export default function DatabasePage() {
                   </div>
                 </th>
                 <th className="px-4 py-4 text-left min-w-[120px]">
-                  <div className="flex flex-col gap-2">
+                  <div className="flex flex-col gap-2 relative">
                     <button onClick={() => toggleFilter('status')} className="text-xs font-bold text-slate-400 uppercase tracking-wider hover:text-blue-500 flex items-center gap-1">Status <Filter className="w-3 h-3" /></button>
                     {visibleFilters.status && (
-                        <select value={colFilters.status} onChange={(e) => setColFilters({...colFilters, status: e.target.value})} className="text-[10px] p-1 border rounded">
-                            <option value="">Todos</option>
-                            <option value="Aprovado">Aprovado</option>
-                            <option value="Reprovado">Reprovado</option>
-                            <option value="Agendado">Agendado</option>
-                            <option value="Liberado">Liberado</option>
-                            <option value="Não Liberado">Não Liberado</option>
-                        </select>
+                        <div className="absolute top-full left-0 mt-2 bg-white border border-slate-200 rounded-xl shadow-xl p-3 z-50 min-w-[160px] flex flex-col gap-2">
+                          {["Agendado", "Aprovado", "Reprovado", "Liberado", "Não Liberado", "Pendente"].map((opt) => (
+                            <label key={opt} className="flex items-center gap-2 cursor-pointer hover:bg-slate-50 p-1 rounded">
+                              <input 
+                                type="checkbox"
+                                checked={colFilters.status.includes(opt)}
+                                onChange={(e) => {
+                                  const checked = e.target.checked;
+                                  setColFilters(prev => ({
+                                    ...prev,
+                                    status: checked ? [...prev.status, opt] : prev.status.filter(s => s !== opt)
+                                  }));
+                                }}
+                                className="rounded text-blue-600 focus:ring-blue-500 w-3 h-3"
+                              />
+                              <span className="text-xs text-slate-700 font-medium">{opt}</span>
+                            </label>
+                          ))}
+                        </div>
                     )}
                   </div>
                 </th>
@@ -353,6 +378,7 @@ export default function DatabasePage() {
                   if (status.includes('reprovado')) statusClasses = "bg-red-50 text-red-700";
                   if (status.includes('agendado')) statusClasses = "bg-slate-100 text-slate-600";
                   if (status.includes('não liberado')) statusClasses = "bg-slate-900 text-white";
+                  if (status.includes('pendente')) statusClasses = "bg-yellow-50 text-yellow-700";
 
                   return (
                     <tr key={apt.idApartamentoVistoria} className="hover:bg-slate-50/50 transition-colors group">
@@ -368,7 +394,7 @@ export default function DatabasePage() {
                       <td className="px-4 py-4 text-center">
                         <div className="flex justify-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                           <button onClick={() => handleEdit(apt)} className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg"><Edit2 className="w-4 h-4" /></button>
-                          <button className="p-2 text-red-600 hover:bg-red-50 rounded-lg"><Trash2 className="w-4 h-4" /></button>
+                          <button onClick={() => handleDelete(apt.idApartamentoVistoria)} className="p-2 text-red-600 hover:bg-red-50 rounded-lg"><Trash2 className="w-4 h-4" /></button>
                         </div>
                       </td>
                     </tr>
