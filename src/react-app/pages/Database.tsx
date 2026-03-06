@@ -13,6 +13,8 @@ import {
   Upload,
   Download
 } from "lucide-react";
+import { format, parseISO, isValid } from "date-fns";
+import { ptBR } from "date-fns/locale";
 import * as XLSX from "xlsx";
 
 import ApartmentModal from "@/react-app/components/ApartmentModal";
@@ -73,13 +75,27 @@ export default function DatabasePage() {
       HELPERS
   ======================= */
 
-  const formatarDataParaBusca = (dataRaw: string | undefined) => {
-    if (!dataRaw || dataRaw === "Sem agendamento" || dataRaw.trim() === "") return "";
-    const dataApenas = dataRaw.split('T')[0];
-    const partes = dataApenas.split('-');
-    if (partes.length < 3) return dataApenas;
-    const [ano, mes, dia] = partes;
-    return `${dia}/${mes}/${ano}`;
+  const formatarDataParaBusca = (dateValue?: string | null): string => {
+    if (!dateValue) return "";
+    try {
+      let cleanDate = String(dateValue).split('T')[0];
+      if (cleanDate.includes('/')) {
+        const parts = cleanDate.split('/');
+        if (parts.length === 3) cleanDate = `${parts[2]}-${parts[1]}-${parts[0]}`;
+      }
+      const date = parseISO(cleanDate);
+      return isValid(date) ? format(date, "dd/MM/yyyy", { locale: ptBR }) : "";
+    } catch {
+      return "";
+    }
+  };
+
+  const formatarDataExibicao = (dateValue?: string | null, diaSemana?: string | null) => {
+    const formattedDate = formatarDataParaBusca(dateValue);
+    if (formattedDate) {
+      return diaSemana && diaSemana !== "Sem agendamento" ? `${formattedDate} - ${diaSemana}` : formattedDate;
+    }
+    return diaSemana || "Sem agendamento";
   };
 
   const handleDownloadTemplate = () => {
@@ -87,12 +103,16 @@ export default function DatabasePage() {
       {
         "nmApartamentoVistoria": "N1-01-0101",
         "nmStatusVistoria": "Agendado",
-        "dtApartamentoVigente": "2026-02-18",
+        // Alterado para um objeto Date para que o Excel formate a célula como Data.
+        // Isso resolve problemas de deserialização no backend (Spring/Java) que espera
+        // um tipo de data numérico do Excel, em vez de uma string de texto.
+        "dtApartamentoVistoria": new Date("2026-02-18T12:00:00Z"),
         "nmHorarioVistoria": "14:00",
         "nmObservacaoVistoria": "Exemplo de preenchimento"
       }
     ];
-    const ws = XLSX.utils.json_to_sheet(header);
+    // A opção { cellDates: true } garante que objetos Date do JS sejam gravados como datas no Excel.
+    const ws = XLSX.utils.json_to_sheet(header, { cellDates: true });
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Modelo_Importacao");
     XLSX.writeFile(wb, "NordTool_Modelo_Importacao.xlsx");
@@ -123,26 +143,23 @@ export default function DatabasePage() {
     const file = e.target.files?.[0];
     if (!file) return;
 
+    // Debug: Verifica se o arquivo é válido antes de enviar
+    console.log("Arquivo selecionado para importação:", file.name, file.type, file.size);
+
     setLoading(true);
     try {
       await apartamentoVistoriaService.importar(file);
       await fetchApartamentos();
       setShowExcelMenu(false);
       alert("Planilha importada com sucesso!");
-    } catch (error) {
+    } catch (error: any) {
       console.error("Erro na importação:", error);
-      alert("Erro ao importar planilha. Verifique se o arquivo segue o modelo.");
+      // Exibe a mensagem exata retornada pelo backend (ex: "Coluna X não encontrada")
+      alert(`Falha na importação: ${error.message || "Erro desconhecido"}`);
     } finally {
       setLoading(false);
       if (fileInputRef.current) fileInputRef.current.value = "";
     }
-  };
-
-  const formatarDataExibicao = (dataRaw: string | undefined, diaSemana: string | undefined) => {
-    if (!dataRaw || dataRaw === "Sem agendamento") return diaSemana || "Sem agendamento";
-    const dataBr = formatarDataParaBusca(dataRaw);
-    if (!dataBr || dataBr.includes('undefined')) return diaSemana || "Sem agendamento";
-    return diaSemana && diaSemana !== "Sem agendamento" ? `${dataBr} - ${diaSemana}` : dataBr;
   };
 
   /* =======================
@@ -213,7 +230,15 @@ export default function DatabasePage() {
       if (colFilters.status.length > 0 && !colFilters.status.some(s => statusApt.includes(s.toLowerCase()))) return false;
       
       if (colFilters.data) {
-        const dataApt = apt.dtApartamentoVigente?.split('T')[0]; 
+        let dataApt = apt.dtApartamentoVigente || "";
+        // Normaliza para YYYY-MM-DD para comparar com o input type="date"
+        if (dataApt.includes('T')) {
+          dataApt = dataApt.split('T')[0];
+        } else if (dataApt.includes('/')) {
+          const parts = dataApt.split('/');
+          if (parts.length === 3) dataApt = `${parts[2]}-${parts[1]}-${parts[0]}`;
+        }
+        
         if (dataApt !== colFilters.data) return false;
       }
       
