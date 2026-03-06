@@ -4,7 +4,7 @@ import { Plus, Loader2, Calendar, AlertCircle, ChevronDown, ChevronUp } from "lu
 import { format, parseISO, isValid, startOfWeek, endOfWeek} from "date-fns";
 import { ptBR } from "date-fns/locale";
 
-import type { ApartamentoVistoriaDto } from "@/shared/types";
+import type { ApartamentoVistoriaDto, ApartamentoVistoriaForm } from "@/shared/types";
 import { apartamentoVistoriaService } from "@/react-app/services/ApartamentoVistoriaService";
 import ApartmentCard from "@/react-app/components/ApartmentCard";
 import ApartmentModal from "@/react-app/components/ApartmentModal";
@@ -40,6 +40,47 @@ export default function DeliveriesPage() {
     }
   }
 
+  const handleSave = async (savedApartment: ApartamentoVistoriaForm) => {
+    // O objeto retornado pelo 'salvar' no modal pode não ter todos os campos calculados (ex: nmDiaSemana).
+    // Para garantir consistência, usamos o ID retornado para buscar o objeto completo,
+    // que é o mesmo formato retornado pela listagem geral.
+    const savedId = savedApartment.idApartamentoVistoria;
+
+    // Fecha o modal imediatamente para dar feedback ao usuário.
+    setModalOpen(false);
+    setEditingApartment(null);
+
+    if (!savedId) {
+      console.error("ID do apartamento salvo não foi retornado. Recarregando a lista completa como fallback.");
+      fetchApartamentos();
+      return;
+    }
+
+    try {
+      // Busca o objeto completo e atualizado.
+      const fullApartmentData = await apartamentoVistoriaService.getById(savedId);
+
+      // Atualiza o estado local com o objeto completo.
+      setApartamentos(prev => {
+        const existingIndex = prev.findIndex(apt => apt.idApartamentoVistoria === savedId);
+
+        if (existingIndex > -1) {
+          // Atualiza um item existente
+          const newApartments = [...prev];
+          newApartments[existingIndex] = fullApartmentData;
+          return newApartments;
+        } else {
+          // Adiciona um novo item
+          return [fullApartmentData, ...prev];
+        }
+      });
+    } catch (error) {
+      console.error("Falha ao buscar dados atualizados do apartamento. Recarregando a lista completa.", error);
+      // Se a busca individual falhar, recarrega tudo para não deixar a UI inconsistente.
+      fetchApartamentos();
+      }
+  };
+
   const handleDelete = async (id: number) => {
     if (!window.confirm("Tem certeza que deseja excluir este registro?")) return;
     try {
@@ -57,6 +98,7 @@ export default function DeliveriesPage() {
     if (!raw) return null;
     const s = String(raw);
     if (s.includes('T')) return s.split('T')[0];
+    
     if (s.includes('/')) {
       const parts = s.split('/');
       if (parts.length === 3) return `${parts[2]}-${parts[1]}-${parts[0]}`;
@@ -238,8 +280,8 @@ export default function DeliveriesPage() {
       {modalOpen && (
         <ApartmentModal 
           apartment={editingApartment} 
-          onClose={() => setModalOpen(false)} 
-          onSave={() => { fetchApartamentos(); setModalOpen(false); }} 
+          onClose={() => { setModalOpen(false); setEditingApartment(null); }} 
+          onSave={handleSave} 
         />
       )}
     </div>
