@@ -1,3 +1,4 @@
+import { useState } from "react";
 import {
   Edit2,
   Trash2,
@@ -14,12 +15,16 @@ interface ApartmentCardProps {
   apartment: ApartamentoVistoriaDto;
   onEdit: (apartment: ApartamentoVistoriaDto) => void;
   onDelete: (id: number) => void;
+  isObservationExpanded: boolean;
+  onToggleObservation: () => void;
 }
 
 export default function ApartmentCard({
   apartment,
   onEdit,
   onDelete,
+  isObservationExpanded,
+  onToggleObservation,
 }: ApartmentCardProps) {
   // Nick, aqui está o segredo: desestruturamos incluindo o dtVistoria do banco
   const {
@@ -145,7 +150,11 @@ export default function ApartmentCard({
         {txObservacaoRevistoria && (
           <div className="border-t border-slate-100 pt-4">
             <p className="text-[10px] font-bold text-slate-400 uppercase mb-1">Observação</p>
-            <p className="text-xs text-slate-600 leading-relaxed italic">
+            <p
+              className={`text-xs text-slate-600 leading-relaxed italic cursor-pointer whitespace-pre-wrap ${!isObservationExpanded ? 'line-clamp-2' : ''}`}
+              onClick={onToggleObservation}
+              title="Clique para expandir/recolher"
+            >
               "{txObservacaoRevistoria}"
             </p>
           </div>

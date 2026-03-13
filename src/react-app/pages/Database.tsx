@@ -232,12 +232,19 @@ export default function DatabasePage() {
       if (colFilters.data) {
         let dataApt = apt.dtApartamentoVigente || "";
         // Normaliza para YYYY-MM-DD para comparar com o input type="date"
-        if (dataApt.includes('T')) {
-          dataApt = dataApt.split('T')[0];
-        } else if (dataApt.includes('/')) {
-          const parts = dataApt.split('/');
-          if (parts.length === 3) dataApt = `${parts[2]}-${parts[1]}-${parts[0]}`;
-        }
+        try {
+          let clean = String(dataApt).split('T')[0];
+          if (clean.includes('/')) {
+            const [d, m, y] = clean.split('/');
+            clean = `${y}-${m}-${d}`;
+          }
+          const parsed = parseISO(clean);
+          if (isValid(parsed)) {
+            dataApt = format(parsed, "yyyy-MM-dd");
+          } else {
+            dataApt = clean;
+          }
+        } catch { }
         
         if (dataApt !== colFilters.data) return false;
       }
