@@ -197,7 +197,9 @@ export default function DeliveriesPage() {
     return <div className="flex items-center justify-center h-full"><Loader2 className="w-8 h-8 animate-spin text-blue-500" /></div>;
   }
 
-  const today = format(new Date(), "yyyy-MM-dd");
+  const now = new Date();
+  const today = format(now, "yyyy-MM-dd");
+  const currentTime = format(now, "HH:mm");
 
   const toggleDate = (date: string) => {
     setCollapsedDates(prev => {
@@ -303,16 +305,20 @@ export default function DeliveriesPage() {
                 
                 {!isCollapsed && (
                 <div className={`p-5 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 ${isTranslucent ? "opacity-50 grayscale-[0.3]" : ""}`}>
-                  {list.map((apt) => (
-                    <ApartmentCard 
-                      key={apt.idApartamentoVistoria} 
-                      apartment={apt} 
-                      onEdit={(a) => { setEditingApartment(a); setModalOpen(true); }} 
-                      onDelete={handleDelete}
-                      isObservationExpanded={expandedObservations.has(apt.idApartamentoVistoria!)}
-                      onToggleObservation={() => toggleObservation(apt.idApartamentoVistoria!)}
-                    />
-                  ))}
+                  {list.map((apt) => {
+                    const isAptPassed = isPast || (dateKey === today && (apt.nmHorarioVistoria || "00:00") < currentTime);
+                    return (
+                      <div key={apt.idApartamentoVistoria} className={isAptPassed && !isTranslucent ? "opacity-50 grayscale-[0.3]" : ""}>
+                        <ApartmentCard 
+                          apartment={apt} 
+                          onEdit={(a) => { setEditingApartment(a); setModalOpen(true); }} 
+                          onDelete={handleDelete}
+                          isObservationExpanded={expandedObservations.has(apt.idApartamentoVistoria!)}
+                          onToggleObservation={() => toggleObservation(apt.idApartamentoVistoria!)}
+                        />
+                      </div>
+                    );
+                  })}
                 </div>
                 )}
               </section>

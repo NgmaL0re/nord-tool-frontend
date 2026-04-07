@@ -39,7 +39,7 @@ export default function DatabasePage() {
   const [nordSelecionado, setNordSelecionado] = useState<"N1" | "N2" | null>(null);
   const [showExcelMenu, setShowExcelMenu] = useState(false);
 
-  const [colFilters, setColFilters] = useState({ apartamento: "", status: ["Agendado", "Pendente"], data: "", horario: "" });
+  const [colFilters, setColFilters] = useState({ apartamento: "", status: ["Agendado", "Pendente", "Pendente DAT"], data: "", horario: "" });
   const [visibleFilters, setVisibleFilters] = useState({ apartamento: false, status: false, data: false, horario: false });
   
   const [sortConfig, setSortConfig] = useState<{ key: keyof ApartamentoVistoriaDto | null, direction: 'asc' | 'desc' }>({ key: 'dtApartamentoVigente', direction: 'asc' });
@@ -365,7 +365,7 @@ export default function DatabasePage() {
                     <button onClick={() => toggleFilter('status')} className="text-xs font-bold text-slate-400 uppercase tracking-wider hover:text-blue-500 flex items-center gap-1">Status <Filter className="w-3 h-3" /></button>
                     {visibleFilters.status && (
                         <div className="absolute top-full left-0 mt-2 bg-white border border-slate-200 rounded-xl shadow-xl p-3 z-50 min-w-[160px] flex flex-col gap-2">
-                          {["Agendado", "Aprovado", "Reprovado", "Liberado", "Não Liberado", "Pendente"].map((opt) => (
+                          {["Agendado", "Aprovado", "Aprovado DAT", "Reprovado", "Liberado", "Não Liberado", "Pendente", "Pendente DAT"].map((opt) => (
                             <label key={opt} className="flex items-center gap-2 cursor-pointer hover:bg-slate-50 p-1 rounded">
                               <input 
                                 type="checkbox"
