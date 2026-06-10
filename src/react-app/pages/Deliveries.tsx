@@ -16,7 +16,7 @@ export default function DeliveriesPage() {
   const sidebarOpen = outletContext?.sidebarOpen ?? false;
   
   const [activeTab, setActiveTab] = useState<"current" | "next" | "all">("current");
-  const [filterNord, setFilterNord] = useState<"Nord 1" | "Nord 2" | null>(null);
+  const [filterNord, setFilterNord] = useState<"Nord 1" | "Nord 2" | "Energy" | null>(null);
   const [apartamentos, setApartamentos] = useState<ApartamentoVistoriaDto[]>([]);
   const [loading, setLoading] = useState(true);
   const [modalOpen, setModalOpen] = useState(false);
@@ -147,13 +147,17 @@ export default function DeliveriesPage() {
     const endNext = format(endOfWeek(proximaSemana, { weekStartsOn: 1 }), "yyyy-MM-dd");
 
     const filtered = apartamentos.filter((apt: any) => {
-      // Filtro de Nord (comum a todas as abas)
+      // Filtro de Nord e Energy (comum a todas as abas)
       const nomeApt = apt.nmApartamentoVistoria?.toUpperCase() || "";
-      if (filterNord && !nomeApt.startsWith(filterNord === 'Nord 1' ? 'N1' : 'N2')) return false;
+      if (filterNord) {
+        if (filterNord === 'Nord 1' && !nomeApt.startsWith('N1')) return false;
+        if (filterNord === 'Nord 2' && !nomeApt.startsWith('N2')) return false;
+        if (filterNord === 'Energy' && !nomeApt.startsWith('EN')) return false;
+      }
       
       const isoDate = getNormalizedDate(apt);
 
-      // Aba "Tudo" mostra todos, sem filtro de data ou status (além do Nord)
+      // Aba "Tudo" mostra todos, sem filtro de data ou status
       if (activeTab === "all") {
         return true;
       }
@@ -169,7 +173,7 @@ export default function DeliveriesPage() {
         return isoDate >= startNext && isoDate <= endNext;
       }
 
-      return false; // Não deve acontecer se activeTab for um dos 3 valores
+      return false; 
     });
 
     const groups = filtered.reduce<Record<string, ApartamentoVistoriaDto[]>>((acc, apt: any) => {
@@ -230,16 +234,16 @@ export default function DeliveriesPage() {
           </div>
 
           <div className="flex p-1 bg-slate-200/50 rounded-lg border border-slate-200 shadow-sm">
-            {["Nord 1", "Nord 2"].map((nord) => (
+            {["Nord 1", "Nord 2", "Energy"].map((nord) => (
               <button 
                 key={nord}
                 onClick={() => setFilterNord(filterNord === nord ? null : nord as any)} 
                 className={`px-4 py-1.5 rounded-md text-xs font-bold transition-all ${filterNord === nord ? "bg-white text-blue-600 shadow-sm" : "text-slate-500"}`}
-              >
-                {nord}
-              </button>
-            ))}
-          </div>
+    >
+      {nord}
+    </button>
+  ))}
+</div>
         </div>
 
         <button 
