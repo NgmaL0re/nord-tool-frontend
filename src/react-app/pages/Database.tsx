@@ -36,7 +36,7 @@ export default function DatabasePage() {
   const [showModal, setShowModal] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [mostrarTodos, setMostrarTodos] = useState(false);
-  const [nordSelecionado, setNordSelecionado] = useState<"N1" | "N2" | null>(null);
+  const [nordSelecionado, setNordSelecionado] = useState<"N1" | "N2" | "EN" | null>(null);
   const [showExcelMenu, setShowExcelMenu] = useState(false);
 
   const [colFilters, setColFilters] = useState({ apartamento: "", status: ["Agendado", "Pendente", "Pendente DAT"], data: "", horario: "" });
@@ -285,6 +285,7 @@ export default function DatabasePage() {
           <div className="flex p-1 bg-slate-200/50 rounded-lg border border-slate-200">
             <button onClick={() => setNordSelecionado(nordSelecionado === "N1" ? null : "N1")} className={`px-3 py-1 rounded-md text-xs font-bold transition-all ${nordSelecionado === "N1" ? "bg-white text-blue-600 shadow-sm" : "text-slate-500"}`}>Nord 1</button>
             <button onClick={() => setNordSelecionado(nordSelecionado === "N2" ? null : "N2")} className={`px-3 py-1 rounded-md text-xs font-bold transition-all ${nordSelecionado === "N2" ? "bg-white text-blue-600 shadow-sm" : "text-slate-500"}`}>Nord 2</button>
+            <button onClick={() => setNordSelecionado(nordSelecionado === "EN" ? null : "EN")} className={`px-3 py-1 rounded-md text-xs font-bold transition-all ${nordSelecionado === "EN" ? "bg-white text-blue-600 shadow-sm" : "text-slate-500"}`}>Energy</button>
           </div>
         </div>
 
