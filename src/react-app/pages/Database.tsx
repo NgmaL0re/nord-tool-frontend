@@ -22,8 +22,6 @@ import { apartamentoVistoriaService } from "@/react-app/services/ApartamentoVist
 import type { ApartamentoVistoriaDto } from "@/shared/types";
 
 export default function DatabasePage() {
-  // Correção: Acessa o contexto de forma segura para evitar crash (tela branca)
-  // se a página for renderizada fora do Layout principal por engano na configuração de rotas.
   const outletContext = useOutletContext<{ sidebarOpen: boolean }>();
   const sidebarOpen = outletContext?.sidebarOpen ?? false;
 
@@ -74,7 +72,6 @@ export default function DatabasePage() {
   /* =======================
       HELPERS
   ======================= */
-
   const formatarDataParaBusca = (dateValue?: string | null): string => {
     if (!dateValue) return "";
     try {
@@ -103,15 +100,11 @@ export default function DatabasePage() {
       {
         "nmApartamentoVistoria": "N1-01-0101",
         "nmStatusVistoria": "Agendado",
-        // Alterado para um objeto Date para que o Excel formate a célula como Data.
-        // Isso resolve problemas de deserialização no backend (Spring/Java) que espera
-        // um tipo de data numérico do Excel, em vez de uma string de texto.
         "dtApartamentoVistoria": new Date("2026-02-18T12:00:00Z"),
         "nmHorarioVistoria": "14:00",
         "nmObservacaoVistoria": "Exemplo de preenchimento"
       }
     ];
-    // A opção { cellDates: true } garante que objetos Date do JS sejam gravados como datas no Excel.
     const ws = XLSX.utils.json_to_sheet(header, { cellDates: true });
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Modelo_Importacao");
@@ -143,7 +136,6 @@ export default function DatabasePage() {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // Debug: Verifica se o arquivo é válido antes de enviar
     console.log("Arquivo selecionado para importação:", file.name, file.type, file.size);
 
     setLoading(true);
@@ -154,7 +146,6 @@ export default function DatabasePage() {
       alert("Planilha importada com sucesso!");
     } catch (error: any) {
       console.error("Erro na importação:", error);
-      // Exibe a mensagem exata retornada pelo backend (ex: "Coluna X não encontrada")
       alert(`Falha na importação: ${error.message || "Erro desconhecido"}`);
     } finally {
       setLoading(false);
@@ -174,17 +165,27 @@ export default function DatabasePage() {
     if (!window.confirm("Tem certeza que deseja excluir este registro?")) return;
     try {
       await apartamentoVistoriaService.deletar(id);
-      await fetchApartamentos();
+      setApartamentos(prev => prev.filter(apt => apt.idApartamentoVistoria !== id));
     } catch (error) {
       console.error("Erro ao excluir:", error);
       alert("Não foi possível excluir o registro.");
     }
   };
 
+  // Correção Cirúrgica: Atualiza localmente a linha editada mantendo a posição e estados
+  const fetchApartamentosSilencioso = async () => {
+    try {
+      const data = await apartamentoVistoriaService.listar();
+      setApartamentos(data || []);
+    } catch (error) {
+      console.error("Erro na atualização silenciosa:", error);
+    }
+  };
+
   const handleSaveApartment = async () => {
     setShowModal(false);
     setSelectedApartment(null);
-    await fetchApartamentos();
+    await fetchApartamentosSilencioso();
   };
 
   const toggleFilter = (key: keyof typeof visibleFilters) => {
@@ -231,7 +232,6 @@ export default function DatabasePage() {
       
       if (colFilters.data) {
         let dataApt = apt.dtApartamentoVigente || "";
-        // Normaliza para YYYY-MM-DD para comparar com o input type="date"
         try {
           let clean = String(dataApt).split('T')[0];
           if (clean.includes('/')) {
@@ -338,7 +338,7 @@ export default function DatabasePage() {
                   <FileSpreadsheet className="w-4 h-4 text-amber-500" /> Planilha modelo
                 </button>
               </div>
-)}
+            )}
           </div>
         </div>
       </div>
