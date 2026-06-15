@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, Fragment } from "react";
 import { useOutletContext } from "react-router";
 import {
   Loader2,
@@ -24,10 +24,6 @@ import type { ApartamentoVistoriaDto } from "@/shared/types";
 export default function DatabasePage() {
   const outletContext = useOutletContext<{ sidebarOpen: boolean }>();
   const sidebarOpen = outletContext?.sidebarOpen ?? false;
-
-  /* =======================
-      STATES
-  ======================= */
   const [apartamentos, setApartamentos] = useState<ApartamentoVistoriaDto[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedApartment, setSelectedApartment] = useState<ApartamentoVistoriaDto | null>(null);
@@ -36,12 +32,10 @@ export default function DatabasePage() {
   const [mostrarTodos, setMostrarTodos] = useState(false);
   const [nordSelecionado, setNordSelecionado] = useState<"N1" | "N2" | "EN" | null>(null);
   const [showExcelMenu, setShowExcelMenu] = useState(false);
-
+  const [expandedObsId, setExpandedObsId] = useState<number | null>(null);
   const [colFilters, setColFilters] = useState({ apartamento: "", status: ["Agendado", "Pendente", "Pendente DAT"], data: "", horario: "" });
   const [visibleFilters, setVisibleFilters] = useState({ apartamento: false, status: false, data: false, horario: false });
-  
   const [sortConfig, setSortConfig] = useState<{ key: keyof ApartamentoVistoriaDto | null, direction: 'asc' | 'desc' }>({ key: 'dtApartamentoVigente', direction: 'asc' });
-
   const fileInputRef = useRef<HTMLInputElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
 
@@ -118,7 +112,8 @@ export default function DatabasePage() {
       "Status": apt.nmStatusVistoria,
       "Data": formatarDataParaBusca(apt.dtApartamentoVigente),
       "Dia da Semana": apt.nmDiaSemana,
-      "Horário": apt.nmHorarioVistoria || "--:--"
+      "Horário": apt.nmHorarioVistoria || "--:--",
+      "Observação": apt.txObservacaoRevistoria || ""
     }));
 
     const ws = XLSX.utils.json_to_sheet(dadosParaExportar);
@@ -222,7 +217,8 @@ export default function DatabasePage() {
             apt.nmApartamentoVistoria, 
             apt.nmStatusVistoria, 
             dataFormatada,
-            apt.nmHorarioVistoria
+            apt.nmHorarioVistoria,
+            apt.txObservacaoRevistoria
         ].map(v => v?.toLowerCase() || "").join(" ");
         if (!searchFields.includes(term)) return false;
       }
@@ -255,17 +251,43 @@ export default function DatabasePage() {
 
     if (sortConfig.key) {
       result.sort((a, b) => {
+        // Tratamento exclusivo e lógico para a coluna de datas
+        if (sortConfig.key === 'dtApartamentoVigente') {
+          const dateA = a.dtApartamentoVigente;
+          const dateB = b.dtApartamentoVigente;
+
+          // Os "sem agendamento" sempre vão para o final
+          if (!dateA && !dateB) return 0;
+          if (!dateA) return 1;
+          if (!dateB) return -1;
+
+          // Converte qualquer data para YYYY-MM-DD, blindando contra o fuso americano
+          const normalizarData = (d: any) => {
+            let clean = String(d).split('T')[0];
+            if (clean.includes('/')) {
+              const parts = clean.split('/');
+              if (parts.length === 3) return `${parts[2]}-${parts[1]}-${parts[0]}`;
+            }
+            return clean;
+          };
+
+          const strA = normalizarData(dateA);
+          const strB = normalizarData(dateB);
+
+          if (strA === strB) {
+            const horaA = String(a.nmHorarioVistoria || "").toLowerCase();
+            const horaB = String(b.nmHorarioVistoria || "").toLowerCase();
+            return horaA.localeCompare(horaB) * (sortConfig.direction === 'asc' ? 1 : -1);
+          }
+
+          return strA.localeCompare(strB) * (sortConfig.direction === 'asc' ? 1 : -1);
+        }
+
+        // Lógica padrão para as outras colunas de texto
         const valA = String(a[sortConfig.key!] || "").toLowerCase();
         const valB = String(b[sortConfig.key!] || "").toLowerCase();
 
-        if (valA === valB) {
-          if (sortConfig.key === 'dtApartamentoVigente') {
-            const timeA = String(a.nmHorarioVistoria || "").toLowerCase();
-            const timeB = String(b.nmHorarioVistoria || "").toLowerCase();
-            return timeA.localeCompare(timeB) * (sortConfig.direction === 'asc' ? 1 : -1);
-          }
-          return 0;
-        }
+        if (valA === valB) return 0;
         if (valA < valB) return sortConfig.direction === 'asc' ? -1 : 1;
         if (valA > valB) return sortConfig.direction === 'asc' ? 1 : -1;
         return 0;
@@ -397,6 +419,7 @@ export default function DatabasePage() {
                   </div>
                 </th>
                 <th className="px-4 py-4 text-left min-w-[120px] text-xs font-bold text-slate-400 uppercase tracking-wider">Horário</th>
+                <th className="px-4 py-4 text-left min-w-[150px] text-xs font-bold text-slate-400 uppercase tracking-wider">Observação</th>
                 <th className="px-4 py-4 text-center text-xs font-bold text-slate-400 uppercase tracking-wider w-24">Ações</th>
               </tr>
             </thead>
@@ -414,24 +437,46 @@ export default function DatabasePage() {
                   if (status.includes('pendente')) statusClasses = "bg-yellow-50 text-yellow-700";
 
                   return (
-                    <tr key={apt.idApartamentoVistoria} className="hover:bg-slate-50/50 transition-colors group">
-                      <td className="px-4 py-4 text-center border-r border-slate-50"><input type="checkbox" className="rounded text-blue-600" /></td>
-                      <td className="px-4 py-4 text-sm font-bold text-slate-700">{apt.nmApartamentoVistoria}</td>
-                      <td className="px-4 py-4 text-xs font-bold uppercase">
-                        <span className={`px-2.5 py-1 rounded-full ${statusClasses}`}>
-                          {apt.nmStatusVistoria}
-                        </span>
-                      </td>
-                      <td className="px-4 py-4 text-sm text-slate-600 font-medium">{formatarDataExibicao(apt.dtApartamentoVigente, apt.nmDiaSemana)}</td>
-                      <td className="px-4 py-4 text-sm text-slate-400 font-medium">{apt.nmHorarioVistoria || "--:--"}</td>
-                      <td className="px-4 py-4 text-center">
-                        <div className="flex justify-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                          <button onClick={() => handleEdit(apt)} className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg"><Edit2 className="w-4 h-4" /></button>
-                          <button onClick={() => handleDelete(apt.idApartamentoVistoria)} className="p-2 text-red-600 hover:bg-red-50 rounded-lg"><Trash2 className="w-4 h-4" /></button>
-                        </div>
-                      </td>
-                    </tr>
-                  )
+                    <Fragment key={apt.idApartamentoVistoria}>
+                      <tr className={`hover:bg-slate-50/50 transition-colors group ${expandedObsId === apt.idApartamentoVistoria ? 'bg-slate-50' : ''}`}>
+                        <td className="px-4 py-4 text-center border-r border-slate-50"><input type="checkbox" className="rounded text-blue-600" /></td>
+                        <td className="px-4 py-4 text-sm font-bold text-slate-700">{apt.nmApartamentoVistoria}</td>
+                        <td className="px-4 py-4 text-xs font-bold uppercase">
+                          <span className={`px-2.5 py-1 rounded-full ${statusClasses}`}>
+                            {apt.nmStatusVistoria}
+                          </span>
+                        </td>
+                        <td className="px-4 py-4 text-sm text-slate-600 font-medium">{formatarDataExibicao(apt.dtApartamentoVigente, apt.nmDiaSemana)}</td>
+                        <td className="px-4 py-4 text-sm text-slate-400 font-medium">{apt.nmHorarioVistoria || "--:--"}</td>
+                        <td 
+                          className="px-4 py-4 text-sm text-slate-500 cursor-pointer hover:bg-slate-100 transition-all max-w-[200px]"
+                          onClick={() => setExpandedObsId(expandedObsId === apt.idApartamentoVistoria ? null : apt.idApartamentoVistoria)}
+                        >
+                          <div className="truncate">
+                            {apt.txObservacaoRevistoria || "-"}
+                          </div>
+                        </td>
+                        <td className="px-4 py-4 text-center">
+                          <div className="flex justify-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <button onClick={() => handleEdit(apt)} className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg"><Edit2 className="w-4 h-4" /></button>
+                            <button onClick={() => handleDelete(apt.idApartamentoVistoria)} className="p-2 text-red-600 hover:bg-red-50 rounded-lg"><Trash2 className="w-4 h-4" /></button>
+                          </div>
+                        </td>
+                      </tr>
+                      
+                      {/* Sub-linha que expande ocupando toda a largura */}
+                      {expandedObsId === apt.idApartamentoVistoria && apt.txObservacaoRevistoria && (
+                        <tr>
+                          <td colSpan={7} className="px-8 py-4 bg-blue-50/30 border-b border-slate-200 shadow-inner">
+                            <div className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Observações Completas</div>
+                            <div className="text-sm text-slate-700 whitespace-pre-wrap break-words leading-relaxed">
+                              {apt.txObservacaoRevistoria}
+                            </div>
+                          </td>
+                        </tr>
+                      )}
+                    </Fragment>
+                  );
                 })
               )}
             </tbody>
