@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Outlet, NavLink } from "react-router";
 import { 
   Database, BarChart3, Package, Settings, Menu, ChevronLeft, 
-  Home as HomeIcon, Map, Briefcase, UserCircle, GraduationCap,
+  Home as HomeIcon, Briefcase, GraduationCap,
   ClipboardCheck, AlertTriangle, Camera, FileText, BookOpen, 
   TrendingUp, GitMerge, FileCheck, CalendarDays, Wallet, Dumbbell, Music, Book
 } from "lucide-react";

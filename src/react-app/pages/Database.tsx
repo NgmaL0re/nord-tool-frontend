@@ -220,8 +220,6 @@ export default function DatabasePage() {
 
       if (!mostrarTodos && statusApt.includes(hiddenStatus)) return false;
       if (nordSelecionado) {
-        const mapObra: Record<string, string> = { "Nord 1": "N1", "Nord 2": "N2", "Energy": "EN" };
-        const sigla = mapObra[nordSelecionado] || nordSelecionado;
         const nome = apt.nmApartamentoVistoria?.toUpperCase() || "";
         if (!nome.startsWith(nordSelecionado)) return false;
       }
