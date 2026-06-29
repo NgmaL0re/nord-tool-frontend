@@ -33,22 +33,35 @@ export default function DatabasePage() {
   const [nordSelecionado, setNordSelecionado] = useState<"N1" | "N2" | "EN" | null>(null);
   const [showExcelMenu, setShowExcelMenu] = useState(false);
   const [expandedObsId, setExpandedObsId] = useState<number | null>(null);
-  const [colFilters, setColFilters] = useState({ apartamento: "", status: ["Agendado", "Pendente", "Pendente DAT"], data: "", horario: "" });
+  const [colFilters, setColFilters] = useState(() => {
+  const savedStatus = localStorage.getItem("@NordTool:filter_db_status");
+        return {
+      apartamento: "",
+      status: savedStatus ? JSON.parse(savedStatus) : ["Agendado", "Pendente"],
+      data: "",
+      horario: ""
+    };
+  });
   const [visibleFilters, setVisibleFilters] = useState({ apartamento: false, status: false, data: false, horario: false });
   const [sortConfig, setSortConfig] = useState<{ key: keyof ApartamentoVistoriaDto | null, direction: 'asc' | 'desc' }>({ key: 'dtApartamentoVigente', direction: 'asc' });
   const fileInputRef = useRef<HTMLInputElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    fetchApartamentos();
+    const syncSettings = () => {
+      // 1. Lê a obra (Condomínio)
+      const savedCondo = localStorage.getItem("@NordTool:filter_db_condo"); // Valor deve ser "Nord 1", "Nord 2" ou "Energy"
+      
+      // 2. Lê os status selecionados
+      const savedStatus = JSON.parse(localStorage.getItem("@NordTool:filter_db_status") || '["Agendado", "Pendente"]');
 
-    const handleClickOutside = (event: MouseEvent) => {
-      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
-        setShowExcelMenu(false);
-      }
+      // 3. Aplica os filtros
+      setNordSelecionado(savedCondo as "N1" | "N2" | "EN" | null);
+      setColFilters(prev => ({ ...prev, status: savedStatus }));
     };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
+
+    syncSettings();
+    fetchApartamentos();
   }, []);
 
   const fetchApartamentos = async () => {
@@ -207,6 +220,8 @@ export default function DatabasePage() {
 
       if (!mostrarTodos && statusApt.includes(hiddenStatus)) return false;
       if (nordSelecionado) {
+        const mapObra: Record<string, string> = { "Nord 1": "N1", "Nord 2": "N2", "Energy": "EN" };
+        const sigla = mapObra[nordSelecionado] || nordSelecionado;
         const nome = apt.nmApartamentoVistoria?.toUpperCase() || "";
         if (!nome.startsWith(nordSelecionado)) return false;
       }
@@ -224,7 +239,7 @@ export default function DatabasePage() {
       }
       
       if (colFilters.apartamento && !apt.nmApartamentoVistoria?.toLowerCase().includes(colFilters.apartamento.toLowerCase())) return false;
-      if (colFilters.status.length > 0 && !colFilters.status.some(s => statusApt.includes(s.toLowerCase()))) return false;
+      if (colFilters.status.length > 0 && !colFilters.status.some((s: string) => statusApt.includes(s.toLowerCase()))) return false;
       
       if (colFilters.data) {
         let dataApt = apt.dtApartamentoVigente || "";
@@ -397,7 +412,7 @@ export default function DatabasePage() {
                                   const checked = e.target.checked;
                                   setColFilters(prev => ({
                                     ...prev,
-                                    status: checked ? [...prev.status, opt] : prev.status.filter(s => s !== opt)
+                                    status: checked ? [...prev.status, opt] : prev.status.filter((s: string) => s !== opt)
                                   }));
                                 }}
                                 className="rounded text-blue-600 focus:ring-blue-500 w-3 h-3"
