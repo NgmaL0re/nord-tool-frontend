@@ -25,7 +25,22 @@ export default function DeliveriesPage() {
   const [expandedObservations, setExpandedObservations] = useState<Set<number>>(new Set());
 
   useEffect(() => {
-    fetchApartamentos();
+    const init = async () => {
+      const savedCondo = localStorage.getItem("@NordTool:filter_del_condo");
+      const savedTime = localStorage.getItem("@NordTool:filter_del_time");
+
+      if (savedCondo && savedCondo !== filterNord) {
+        setFilterNord(savedCondo as "Nord 1" | "Nord 2" | "Energy");
+      }
+      if (savedTime && savedTime !== activeTab) {
+        setActiveTab(savedTime as "current" | "next" | "all");
+      }
+
+      // IMPORTANTE: Dispara a busca dos dados após a sincronia
+      await fetchApartamentos();
+    };
+
+    init();
   }, []);
 
   async function fetchApartamentos() {
@@ -137,65 +152,56 @@ export default function DeliveriesPage() {
   };
 
  const groupedApartments = useMemo(() => {
-    const hoje = new Date();
-    // Corrigido para a semana começar na Segunda-feira, comum no Brasil
-    const startCur = format(startOfWeek(hoje, { weekStartsOn: 1 }), "yyyy-MM-dd");
-    const endCur = format(endOfWeek(hoje, { weekStartsOn: 1 }), "yyyy-MM-dd");
+  if (!apartamentos || apartamentos.length === 0) return {};
 
-    const proximaSemana = new Date(hoje.getFullYear(), hoje.getMonth(), hoje.getDate() + 7);
-    const startNext = format(startOfWeek(proximaSemana, { weekStartsOn: 1 }), "yyyy-MM-dd");
-    const endNext = format(endOfWeek(proximaSemana, { weekStartsOn: 1 }), "yyyy-MM-dd");
+  const hoje = new Date();
+  const startCur = format(startOfWeek(hoje, { weekStartsOn: 1 }), "yyyy-MM-dd");
+  const endCur = format(endOfWeek(hoje, { weekStartsOn: 1 }), "yyyy-MM-dd");
+  const proximaSemana = new Date(hoje.getFullYear(), hoje.getMonth(), hoje.getDate() + 7);
+  const startNext = format(startOfWeek(proximaSemana, { weekStartsOn: 1 }), "yyyy-MM-dd");
+  const endNext = format(endOfWeek(proximaSemana, { weekStartsOn: 1 }), "yyyy-MM-dd");
+  const filtered = apartamentos.filter((apt: any) => {
+    // Filtro de Nord e Energy (comum a todas as abas)
+    const nomeApt = apt.nmApartamentoVistoria?.toUpperCase() || "";
+    if (filterNord) {
+      if (filterNord === 'Nord 1' && !nomeApt.startsWith('N1')) return false;
+      if (filterNord === 'Nord 2' && !nomeApt.startsWith('N2')) return false;
+      if (filterNord === 'Energy' && !nomeApt.startsWith('EN')) return false;
+    }
+    
+    const isoDate = getNormalizedDate(apt);
+    if (activeTab === "all") {
+      return true;
+    }
+    if (!isoDate) return false;
+    if (activeTab === "current") {
+      return isoDate >= startCur && isoDate <= endCur;
+    }
+    if (activeTab === "next") {
+      return isoDate >= startNext && isoDate <= endNext;
+    }
+    return false; 
+  });
 
-    const filtered = apartamentos.filter((apt: any) => {
-      // Filtro de Nord e Energy (comum a todas as abas)
-      const nomeApt = apt.nmApartamentoVistoria?.toUpperCase() || "";
-      if (filterNord) {
-        if (filterNord === 'Nord 1' && !nomeApt.startsWith('N1')) return false;
-        if (filterNord === 'Nord 2' && !nomeApt.startsWith('N2')) return false;
-        if (filterNord === 'Energy' && !nomeApt.startsWith('EN')) return false;
-      }
-      
-      const isoDate = getNormalizedDate(apt);
+  const groups = filtered.reduce<Record<string, ApartamentoVistoriaDto[]>>((acc, apt: any) => {
+    const key = getNormalizedDate(apt) || "Sem Data";
+    if (!acc[key]) acc[key] = [];
+    acc[key].push(apt);
+    return acc;
+  }, {});
 
-      // Aba "Tudo" mostra todos, sem filtro de data ou status
-      if (activeTab === "all") {
-        return true;
-      }
-
-      // Para as abas de semana, precisamos de uma data
-      if (!isoDate) return false;
-
-      if (activeTab === "current") {
-        return isoDate >= startCur && isoDate <= endCur;
-      }
-
-      if (activeTab === "next") {
-        return isoDate >= startNext && isoDate <= endNext;
-      }
-
-      return false; 
+  const sortedKeys = Object.keys(groups).sort();
+  const sortedGroups: Record<string, ApartamentoVistoriaDto[]> = {};
+  sortedKeys.forEach(key => {
+    sortedGroups[key] = groups[key].sort((a, b) => {
+      const timeA = a.nmHorarioVistoria || "";
+      const timeB = b.nmHorarioVistoria || "";
+      return timeA.localeCompare(timeB);
     });
+  });
 
-    const groups = filtered.reduce<Record<string, ApartamentoVistoriaDto[]>>((acc, apt: any) => {
-      const key = getNormalizedDate(apt) || "Sem Data";
-      if (!acc[key]) acc[key] = [];
-      acc[key].push(apt);
-      return acc;
-    }, {});
-
-    // Ordena as chaves para as datas aparecerem na ordem certa (01, 02, 03...)
-    const sortedKeys = Object.keys(groups).sort();
-    const sortedGroups: Record<string, ApartamentoVistoriaDto[]> = {};
-    sortedKeys.forEach(key => {
-      sortedGroups[key] = groups[key].sort((a, b) => {
-        const timeA = a.nmHorarioVistoria || "";
-        const timeB = b.nmHorarioVistoria || "";
-        return timeA.localeCompare(timeB);
-      });
-    });
-
-    return sortedGroups;
-  }, [apartamentos, filterNord, activeTab]);
+  return sortedGroups;
+}, [apartamentos, filterNord, activeTab]);
 
   if (loading) {
     return <div className="flex items-center justify-center h-full"><Loader2 className="w-8 h-8 animate-spin text-blue-500" /></div>;

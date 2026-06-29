@@ -1,244 +1,283 @@
 import { useEffect, useState } from "react";
 import {
-  Settings as SettingsIcon,
-  Save,
-  ChevronDown,
-  ChevronUp,
+  Settings as SettingsIcon, Save, ChevronDown, ChevronUp,
+  Loader2, Building2, Clock, Filter, Database, LayoutDashboard
 } from "lucide-react";
-
 
 export default function SettingsPage() {
   const [apartmentList, setApartmentList] = useState("");
   const [timeSlotsList, setTimeSlotsList] = useState("");
+  
+  // Novos estados para o Pré-carregamento
+  const [activeFilterTab, setActiveFilterTab] = useState<"agenda" | "database">("agenda");
+  const [defaultDeliveryCondo, setDefaultDeliveryCondo] = useState("");
+  const [defaultDeliveryTime, setDefaultDeliveryTime] = useState("current");
+  const [defaultDbCondo, setDefaultDbCondo] = useState("");
+  const [defaultDbShowAll, setDefaultDbShowAll] = useState(false);
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
-
+  
   const [showApartmentList, setShowApartmentList] = useState(false);
   const [showTimeSlotsList, setShowTimeSlotsList] = useState(false);
+  const [showFilters, setShowFilters] = useState(false);
 
-  /* ======================
-     LOAD SETTINGS
-  ====================== */
-  async function fetchSettings() {
-    try {
-      setLoading(true);
-
-      /*const [apartamentos, horarios] = await Promise.all([
-        configuracaoService.buscar("lista_apartamentos"),
-        configuracaoService.buscar("lista_horarios"),
-      ]);
-
-      setApartmentList(apartamentos);
-      setTimeSlotsList(horarios);*/
-    } catch (error) {
-      console.error("Erro ao carregar configurações:", error);
-      setMessage("Erro ao carregar configurações");
-    } finally {
-      setLoading(false);
-    }
-  }
+  const [defaultDbStatus, setDefaultDbStatus] = useState<string[]>([]);
 
   useEffect(() => {
+    const statusSalvos = localStorage.getItem("@NordTool:filter_db_status");
+    setDefaultDbStatus(statusSalvos ? JSON.parse(statusSalvos) : ["Agendado", "Pendente"]);
+    const fetchSettings = async () => {
+      setLoading(true);
+      try {
+        await new Promise(resolve => setTimeout(resolve, 400)); // Simula o tempo de busca
+
+        setApartmentList(localStorage.getItem("@NordTool:apartamentos") || "101, 102, 201");
+        setTimeSlotsList(localStorage.getItem("@NordTool:horarios") || "08:00, 09:00, 10:00");
+        
+        // Carregando os filtros
+        setDefaultDeliveryCondo(localStorage.getItem("@NordTool:filter_del_condo") || "");
+        setDefaultDeliveryTime(localStorage.getItem("@NordTool:filter_del_time") || "current");
+        setDefaultDbCondo(localStorage.getItem("@NordTool:filter_db_condo") || "");
+        setDefaultDbShowAll(localStorage.getItem("@NordTool:filter_db_showall") === "true");
+
+      } catch (error) {
+        setMessage("Erro crítico na leitura da fundação.");
+      } finally {
+        setLoading(false);
+      }
+    };
     fetchSettings();
   }, []);
 
-  /* ======================
-     SAVE SETTINGS
-  ====================== */
-  async function handleSave() {
+  const handleSave = async () => {
+    setSaving(true);
+    setMessage("");
     try {
-      setSaving(true);
-      setMessage("");
+      await new Promise(resolve => setTimeout(resolve, 600));
+      
+      localStorage.setItem("@NordTool:apartamentos", apartmentList);
+      localStorage.setItem("@NordTool:horarios", timeSlotsList);
+      
+      // Salvando os filtros
+      localStorage.setItem("@NordTool:filter_del_condo", defaultDeliveryCondo);
+      localStorage.setItem("@NordTool:filter_del_time", defaultDeliveryTime);
+      localStorage.setItem("@NordTool:filter_db_condo", defaultDbCondo);
+      localStorage.setItem("@NordTool:filter_db_showall", String(defaultDbShowAll));
 
-      /*await Promise.all([
-        configuracaoService.salvar(
-          "lista_apartamentos",
-          apartmentList
-        ),
-        configuracaoService.salvar(
-          "lista_horarios",
-          timeSlotsList
-        ),
-      ]);*/
-
-      setMessage("Configurações salvas com sucesso!");
+      setMessage("Parâmetros fixados com sucesso!");
       setTimeout(() => setMessage(""), 3000);
     } catch (error) {
-      console.error("Erro ao salvar configurações:", error);
-      setMessage("Erro ao salvar configurações");
+      setMessage("Erro ao salvar os dados.");
     } finally {
       setSaving(false);
     }
-  }
+    localStorage.setItem("@NordTool:filter_db_status", JSON.stringify(defaultDbStatus));
+  };
 
-  /* ======================
-     LOADING
-  ====================== */
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-full">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500" />
+      <div className="flex flex-col items-center justify-center h-[70vh] gap-4">
+        <Loader2 className="w-10 h-10 animate-spin text-blue-600" />
       </div>
     );
   }
 
-  /* ======================
-     RENDER
-  ====================== */
   return (
-    <div className="p-8">
-      {/* HEADER */}
-      <div className="flex items-center gap-3 mb-8">
-        <div className="p-3 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-xl shadow-lg">
-          <SettingsIcon className="w-6 h-6 text-white" />
+    <div className="max-w-4xl animate-in fade-in zoom-in-95 duration-500 mx-auto">
+      <div className="flex items-center gap-4 mb-8">
+        <div className="p-3.5 bg-white border border-slate-200 rounded-2xl shadow-sm">
+          <SettingsIcon className="w-6 h-6 text-blue-600" />
         </div>
-        <h2 className="text-3xl font-bold text-slate-800">
-          Configurações
-        </h2>
+        <div>
+          <h2 className="text-3xl font-black tracking-tight text-slate-800">
+            Configurações Globais
+          </h2>
+          <p className="text-sm text-slate-500 font-medium mt-1">
+            Ajuste os parâmetros do sistema para todas as frentes de serviço
+          </p>
+        </div>
       </div>
 
-      <div className="bg-white rounded-xl shadow-lg p-8 max-w-3xl space-y-6">
-        {/* =====================
-            HORÁRIOS
-        ===================== */}
-        <div>
-          <button
-            onClick={() =>
-              setShowTimeSlotsList((prev) => !prev)
-            }
-            className="w-full flex items-center justify-between p-4 bg-slate-50 hover:bg-slate-100 rounded-lg transition-colors"
-          >
-            <div className="text-left">
-              <h3 className="text-xl font-bold text-slate-800">
-                Horários Disponíveis
-              </h3>
-              <p className="text-sm text-slate-600">
-                Configure os horários disponíveis para agendamento
-              </p>
-            </div>
-            {showTimeSlotsList ? (
-              <ChevronUp className="w-6 h-6 text-slate-600" />
-            ) : (
-              <ChevronDown className="w-6 h-6 text-slate-600" />
-            )}
-          </button>
+      <div className="bg-white rounded-3xl shadow-sm border border-slate-200/60 p-2 overflow-hidden">
+        <div className="p-6 md:p-8 space-y-6">
 
-          {showTimeSlotsList && (
-            <div className="mt-4 space-y-4">
-              <textarea
-                value={timeSlotsList}
-                onChange={(e) =>
-                  setTimeSlotsList(e.target.value)
-                }
-                rows={3}
-                className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 resize-none font-mono text-sm"
-                placeholder="08:00,09:00,10:00"
-              />
-
-              <div className="pt-4 border-t">
-                <h4 className="font-semibold mb-2">
-                  Prévia dos Horários
-                </h4>
-                <div className="flex flex-wrap gap-2">
-                  {timeSlotsList
-                    .split(",")
-                    .map((time, i) => (
-                      <span
-                        key={i}
-                        className="px-3 py-1 bg-blue-100 text-blue-700 rounded-lg text-sm"
-                      >
-                        {time.trim()}
-                      </span>
-                    ))}
+          {/* SESSÃO DE PRÉ-CARREGAMENTO (FILTROS) */}
+          <div className="border border-slate-200 rounded-2xl overflow-hidden bg-white shadow-sm">
+            <button
+              onClick={() => setShowFilters((prev) => !prev)}
+              className="w-full flex items-center justify-between p-5 hover:bg-slate-50 transition-colors"
+            >
+              <div className="flex items-center gap-4">
+                <div className="p-2.5 bg-purple-100/50 text-purple-600 rounded-xl">
+                  <Filter className="w-5 h-5" />
+                </div>
+                <div className="text-left">
+                  <h3 className="text-lg font-bold text-slate-800">
+                    Pré-carregamento de Filtros
+                  </h3>
+                  <p className="text-xs text-slate-500 font-medium mt-0.5">
+                    Defina o que o sistema deve carregar automaticamente ao abrir cada tela
+                  </p>
                 </div>
               </div>
-            </div>
-          )}
-        </div>
-
-        {/* =====================
-            APARTAMENTOS
-        ===================== */}
-        <div>
-          <button
-            onClick={() =>
-              setShowApartmentList((prev) => !prev)
-            }
-            className="w-full flex items-center justify-between p-4 bg-slate-50 hover:bg-slate-100 rounded-lg transition-colors"
-          >
-            <div className="text-left">
-              <h3 className="text-xl font-bold text-slate-800">
-                Lista de Apartamentos
-              </h3>
-              <p className="text-sm text-slate-600">
-                Configure os apartamentos disponíveis
-              </p>
-            </div>
-            {showApartmentList ? (
-              <ChevronUp className="w-6 h-6 text-slate-600" />
-            ) : (
-              <ChevronDown className="w-6 h-6 text-slate-600" />
-            )}
-          </button>
-
-          {showApartmentList && (
-            <div className="mt-4 space-y-4">
-              <textarea
-                value={apartmentList}
-                onChange={(e) =>
-                  setApartmentList(e.target.value)
-                }
-                rows={5}
-                className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 resize-none font-mono text-sm"
-                placeholder="101,102,201"
-              />
-
-              <div className="pt-4 border-t">
-                <h4 className="font-semibold mb-2">
-                  Prévia dos Apartamentos
-                </h4>
-                <div className="flex flex-wrap gap-2">
-                  {apartmentList
-                    .split(",")
-                    .map((apt, i) => (
-                      <span
-                        key={i}
-                        className="px-3 py-1 bg-slate-100 text-slate-700 rounded-lg text-sm"
-                      >
-                        {apt.trim()}
-                      </span>
-                    ))}
-                </div>
+              <div className="p-2 hover:bg-slate-200/50 rounded-full transition-colors">
+                {showFilters ? <ChevronUp className="w-5 h-5 text-slate-500" /> : <ChevronDown className="w-5 h-5 text-slate-500" />}
               </div>
-            </div>
-          )}
-        </div>
+            </button>
 
-        {/* =====================
-            SAVE
-        ===================== */}
-        <button
-          onClick={handleSave}
-          disabled={saving}
-          className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-500 to-indigo-500 text-white rounded-lg shadow disabled:opacity-50"
-        >
-          <Save className="w-5 h-5" />
-          {saving ? "Salvando..." : "Salvar Configurações"}
-        </button>
+            {showFilters && (
+              <div className="p-5 pt-0 border-t border-slate-100 bg-slate-50/30">
+                {/* Abas de Seleção */}
+                <div className="flex p-1 bg-slate-200/50 rounded-xl border border-slate-200 w-max mb-6 mt-4">
+                  <button 
+                    onClick={() => setActiveFilterTab("agenda")}
+                    className={`px-6 py-2 rounded-lg text-sm font-bold transition-all flex items-center gap-2 ${activeFilterTab === "agenda" ? "bg-white text-blue-600 shadow-sm" : "text-slate-500 hover:text-slate-700"}`}
+                  >
+                    <LayoutDashboard className="w-4 h-4" /> Agenda (Entregas)
+                  </button>
+                  <button 
+                    onClick={() => setActiveFilterTab("database")}
+                    className={`px-6 py-2 rounded-lg text-sm font-bold transition-all flex items-center gap-2 ${activeFilterTab === "database" ? "bg-white text-blue-600 shadow-sm" : "text-slate-500 hover:text-slate-700"}`}
+                  >
+                    <Database className="w-4 h-4" /> Banco de Dados
+                  </button>
+                </div>
 
-        {message && (
-          <div
-            className={`p-4 rounded-lg text-sm ${
-              message.includes("sucesso")
-                ? "bg-green-50 text-green-700 border border-green-200"
-                : "bg-red-50 text-red-700 border border-red-200"
-            }`}
-          >
-            {message}
+                {/* Conteúdo: AGENDA */}
+                {activeFilterTab === "agenda" && (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 animate-in fade-in slide-in-from-left-2 duration-300">
+                    <div className="space-y-3">
+                      <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Obra/Condomínio Padrão</label>
+                      <select 
+                        value={defaultDeliveryCondo} 
+                        onChange={(e) => setDefaultDeliveryCondo(e.target.value)}
+                        className="w-full p-3 bg-white border border-slate-200 rounded-xl text-sm font-medium focus:ring-2 focus:ring-blue-500/20 outline-none shadow-sm"
+                      >
+                        <option value="">Nenhum (Mostrar Todos)</option>
+                        <option value="Nord 1">Nord 1</option>
+                        <option value="Nord 2">Nord 2</option>
+                        <option value="Energy">Energy</option>
+                      </select>
+                    </div>
+                    <div className="space-y-3">
+                      <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Período Padrão</label>
+                      <select 
+                        value={defaultDeliveryTime} 
+                        onChange={(e) => setDefaultDeliveryTime(e.target.value)}
+                        className="w-full p-3 bg-white border border-slate-200 rounded-xl text-sm font-medium focus:ring-2 focus:ring-blue-500/20 outline-none shadow-sm"
+                      >
+                        <option value="current">Semana Vigente</option>
+                        <option value="next">Próxima Semana</option>
+                        <option value="all">Tudo</option>
+                      </select>
+                    </div>
+                  </div>
+                )}
+
+                {/* Conteúdo: BANCO DE DADOS */}
+                {activeFilterTab === "database" && (
+                  <div className="space-y-6 animate-in fade-in slide-in-from-right-2 duration-300">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div className="space-y-3">
+                        <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Obra/Condomínio Padrão</label>
+                        <select value={defaultDbCondo} onChange={(e) => setDefaultDbCondo(e.target.value)} className="w-full p-3 bg-white border border-slate-200 rounded-xl text-sm font-medium outline-none shadow-sm">
+                          <option value="">Nenhum (Todos)</option>
+                          <option value="N1">Nord 1</option>
+                          <option value="N2">Nord 2</option>
+                          <option value="EN">Energy</option>
+                        </select>
+                      </div>
+                    </div>
+
+                    <div className="space-y-3">
+                      <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Status carregados automaticamente</label>
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 bg-white p-4 rounded-xl border border-slate-200">
+                        {["Agendado", "Aprovado", "Reprovado", "Pendente", "Liberado","Aprovado DAT","Pendente DAT"].map((status) => (
+                          <label key={status} className="flex items-center gap-2 cursor-pointer hover:bg-slate-50 p-2 rounded-lg">
+                            <input 
+                              type="checkbox" 
+                              checked={defaultDbStatus.includes(status)}
+                              onChange={(e) => {
+                                const checked = e.target.checked;
+                                setDefaultDbStatus(prev => checked ? [...prev, status] : prev.filter(s => s !== status));
+                              }}
+                              className="rounded text-blue-600 focus:ring-blue-500"
+                            />
+                            <span className="text-sm text-slate-700">{status}</span>
+                          </label>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                )}
+                </div>
+              )}
           </div>
-        )}
+
+          {/* SESSÃO DE HORÁRIOS */}
+          <div className="border border-slate-100 rounded-2xl overflow-hidden bg-slate-50/50 hover:bg-slate-50 transition-colors">
+            <button onClick={() => setShowTimeSlotsList((prev) => !prev)} className="w-full flex items-center justify-between p-5">
+              <div className="flex items-center gap-4">
+                <div className="p-2.5 bg-blue-100/50 text-blue-600 rounded-xl">
+                  <Clock className="w-5 h-5" />
+                </div>
+                <div className="text-left">
+                  <h3 className="text-lg font-bold text-slate-800">Grade de Horários</h3>
+                </div>
+              </div>
+              <div className="p-2 hover:bg-slate-200/50 rounded-full transition-colors">
+                {showTimeSlotsList ? <ChevronUp className="w-5 h-5 text-slate-500" /> : <ChevronDown className="w-5 h-5 text-slate-500" />}
+              </div>
+            </button>
+
+            {showTimeSlotsList && (
+              <div className="p-5 pt-0">
+                <textarea value={timeSlotsList} onChange={(e) => setTimeSlotsList(e.target.value)} rows={2} className="w-full p-4 bg-white border border-slate-200 rounded-xl outline-none resize-none font-mono text-sm" />
+              </div>
+            )}
+          </div>
+
+          {/* SESSÃO DE APARTAMENTOS */}
+          <div className="border border-slate-100 rounded-2xl overflow-hidden bg-slate-50/50 hover:bg-slate-50 transition-colors">
+            <button onClick={() => setShowApartmentList((prev) => !prev)} className="w-full flex items-center justify-between p-5">
+              <div className="flex items-center gap-4">
+                <div className="p-2.5 bg-indigo-100/50 text-indigo-600 rounded-xl">
+                  <Building2 className="w-5 h-5" />
+                </div>
+                <div className="text-left">
+                  <h3 className="text-lg font-bold text-slate-800">Mapeamento de Unidades</h3>
+                </div>
+              </div>
+              <div className="p-2 hover:bg-slate-200/50 rounded-full transition-colors">
+                {showApartmentList ? <ChevronUp className="w-5 h-5 text-slate-500" /> : <ChevronDown className="w-5 h-5 text-slate-500" />}
+              </div>
+            </button>
+
+            {showApartmentList && (
+              <div className="p-5 pt-0">
+                <textarea value={apartmentList} onChange={(e) => setApartmentList(e.target.value)} rows={3} className="w-full p-4 bg-white border border-slate-200 rounded-xl outline-none resize-none font-mono text-sm" />
+              </div>
+            )}
+          </div>
+
+        </div>
+        
+        {/* RODAPÉ */}
+        <div className="p-6 bg-slate-50 border-t border-slate-100 flex items-center justify-between">
+          <div className="flex-1">
+            {message && (
+              <span className={`text-sm font-bold px-4 py-2 rounded-lg ${message.includes("sucesso") ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}`}>
+                {message}
+              </span>
+            )}
+          </div>
+          <button onClick={handleSave} disabled={saving} className="flex items-center gap-2 px-6 py-3 bg-blue-600 text-white font-bold rounded-xl shadow-md hover:bg-blue-700 active:scale-95 transition-all">
+            {saving ? <Loader2 className="w-5 h-5 animate-spin" /> : <Save className="w-5 h-5" />}
+            {saving ? "Registrando..." : "Salvar Parâmetros"}
+          </button>
+        </div>
       </div>
     </div>
   );
