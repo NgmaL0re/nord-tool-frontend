@@ -39,11 +39,7 @@ export default function ApartmentModal({
     dtRevistoriaVigente: "",
   });
 
-  /* =========================
-      LOAD DOMÍNIOS (COMBOS)
-  ========================= */
   useEffect(() => {
-    // Carregamos as listas de referência e garantimos que o erro 404 não quebre o componente
     Promise.all([
       listarDiasSemana().catch(() => []), 
       listarStatusVistoria().catch(() => [])
@@ -53,21 +49,15 @@ export default function ApartmentModal({
     });
   }, []);
 
-  /* =========================
-      LOAD APARTMENT (EDIT) 
-  ========================= */
   useEffect(() => {
     if (apartment) {
-      // FIX DATA: Tradução de data para o formato que o input type="date" exige (YYYY-MM-DD)
       let dataISO = apartment.dtApartamentoVigente ?? "";
-      
       if (dataISO.includes('/')) {
         const [d, m, a] = dataISO.split('/');
         dataISO = `${a}-${m}-${d}`;
       } else if (dataISO.includes('T')) {
         dataISO = dataISO.split('T')[0];
       }
-
       setFormData({
         idApartamentoVistoria: apartment.idApartamentoVistoria,
         nmApartamentoVistoria: apartment.nmApartamentoVistoria ?? "",
@@ -82,28 +72,11 @@ export default function ApartmentModal({
     }
   }, [apartment]);
 
-  /* =========================
-      LÓGICA DE DIA AUTOMÁTICO
-  ========================= */
   const handleDateChange = (novaData: string) => {
-    if (!novaData) {
-      setFormData(prev => ({ ...prev, dtApartamentoVigente: "", idDiaSemana: 0 }));
-      return;
-    }
-
-    // Pega o index do dia (0-Dom a 6-Sab) evitando problemas de fuso
     const dataObj = new Date(novaData + 'T00:00:00');
     const diaIndex = dataObj.getDay(); 
-
-    // Mapeamento: Domingo(0) -> ID 7, Segunda(1) -> ID 1...
-    // Nick, ajuste aqui se o ID do seu banco for diferente (ex: Seg=2)
     const idSugerido = diaIndex === 0 ? 7 : diaIndex;
-
-    setFormData(prev => ({
-      ...prev,
-      dtApartamentoVigente: novaData,
-      idDiaSemana: idSugerido
-    }));
+    setFormData(prev => ({ ...prev, dtApartamentoVigente: novaData, idDiaSemana: idSugerido }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -122,70 +95,57 @@ export default function ApartmentModal({
 
   return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-3xl shadow-2xl max-w-lg w-full overflow-hidden animate-in zoom-in-95 duration-200">
+      <div className="bg-white rounded-3xl shadow-2xl w-full max-w-7xl flex flex-col md:flex-row overflow-hidden h-[90vh] md:h-[85vh] relative">
         
-        <header className="flex items-center justify-between px-6 py-5 bg-gradient-to-r from-blue-600 to-indigo-600 text-white">
-          <h3 className="text-xl font-bold tracking-tight">
-            {apartment ? "Editar Registro" : "Novo Agendamento"}
-          </h3>
-          <button onClick={onClose} className="p-1 hover:bg-white/20 rounded-lg transition-colors">
-            <X className="w-6 h-6" />
-          </button>
-        </header>
+        {/* Botão de Fechar fixo */}
+        <button 
+          onClick={onClose} 
+          className="absolute top-4 right-4 z-50 p-2 bg-slate-100 hover:bg-slate-200 text-slate-500 rounded-full transition-all"
+        >
+          <X className="w-5 h-5" />
+        </button>
 
-        <form onSubmit={handleSubmit} className="p-8 space-y-6">
-          
-          <div className="space-y-1">
-            <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider ml-1">Apartamento</label>
-            <input
-              value={formData.nmApartamentoVistoria}
-              onChange={(e) => setFormData({ ...formData, nmApartamentoVistoria: e.target.value })}
-              className="w-full border border-slate-200 p-3 rounded-xl focus:ring-2 focus:ring-blue-500/20 outline-none transition-all shadow-sm"
-            />
-          </div>
+        {/* COLUNA ESQUERDA: Formulário com flex-1 para dividir o espaço 50/50 no celular */}
+        <div className="flex-1 w-full md:w-1/3 p-6 md:p-10 border-b md:border-b-0 md:border-r border-slate-100 flex flex-col overflow-y-auto">
+          <header className="mb-6 md:mb-10">
+            <h3 className="text-xl md:text-2xl font-black text-slate-800 tracking-tight">
+              {apartment ? "Editar Registro" : "Novo Agendamento"}
+            </h3>
+          </header>
 
-          <div className="grid grid-cols-2 gap-4">
-            {/* Data */}
+          <form onSubmit={handleSubmit} className="flex-1 space-y-4 md:space-y-6">
             <div className="space-y-1">
-              <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider ml-1">Data</label>
+              <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider ml-1">Apartamento</label>
               <input
-                type="date"
-                value={formData.dtApartamentoVigente}
-                onChange={(e) => handleDateChange(e.target.value)}
+                value={formData.nmApartamentoVistoria}
+                onChange={(e) => setFormData({ ...formData, nmApartamentoVistoria: e.target.value })}
                 className="w-full border border-slate-200 p-3 rounded-xl focus:ring-2 focus:ring-blue-500/20 outline-none shadow-sm"
               />
             </div>
 
-            {/* Dia da Semana Reativo */}
-            <div className="space-y-1">
-              <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider ml-1">Dia da Semana</label>
-              <select
-                value={formData.idDiaSemana}
-                onChange={(e) => setFormData({ ...formData, idDiaSemana: Number(e.target.value) })}
-                className="w-full border border-slate-200 p-3 rounded-xl bg-white focus:ring-2 focus:ring-blue-500/20 outline-none shadow-sm"
-              >
-                <option value={0}>Selecione...</option>
-                {diasSemana?.map((d) => (
-                  <option key={d.idDiaSemana} value={d.idDiaSemana}>
-                    {d.nmDiaSemana}
-                  </option>
-                ))}
-              </select>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            {/* Horário */}
-            <div className="space-y-1">
-              <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider ml-1">Horário</label>
-              <input
-                value={formData.nmHorarioVistoria}
-                onChange={(e) => setFormData({ ...formData, nmHorarioVistoria: e.target.value })}
-                className="w-full border border-slate-200 p-3 rounded-xl focus:ring-2 focus:ring-blue-500/20 outline-none shadow-sm"
-              />
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-1">
+                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider ml-1">Data</label>
+                <input
+                  type="date"
+                  value={formData.dtApartamentoVigente}
+                  onChange={(e) => handleDateChange(e.target.value)}
+                  className="w-full border border-slate-200 p-3 rounded-xl focus:ring-2 focus:ring-blue-500/20 outline-none shadow-sm"
+                />
+              </div>
+              <div className="space-y-1">
+                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider ml-1">Dia da Semana</label>
+                <select
+                  value={formData.idDiaSemana}
+                  onChange={(e) => setFormData({ ...formData, idDiaSemana: Number(e.target.value) })}
+                  className="w-full border border-slate-200 p-3 rounded-xl bg-white focus:ring-2 focus:ring-blue-500/20 outline-none shadow-sm"
+                >
+                  <option value={0}>Selecione...</option>
+                  {diasSemana?.map((d) => <option key={d.idDiaSemana} value={d.idDiaSemana}>{d.nmDiaSemana}</option>)}
+                </select>
+              </div>
             </div>
 
-            {/* Status */}
             <div className="space-y-1">
               <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider ml-1">Status</label>
               <select
@@ -194,33 +154,28 @@ export default function ApartmentModal({
                 className="w-full border border-slate-200 p-3 rounded-xl focus:ring-2 focus:ring-blue-500/20 outline-none shadow-sm"
               >
                 <option value={0}>Selecione...</option>
-                {statusList?.map((s) => (
-                  <option key={s.idStatusVistoria} value={s.idStatusVistoria}>
-                    {s.nmStatusVistoria}
-                  </option>
-                ))}
+                {statusList?.map((s) => <option key={s.idStatusVistoria} value={s.idStatusVistoria}>{s.nmStatusVistoria}</option>)}
               </select>
             </div>
-          </div>
+          </form>
 
-          <div className="space-y-1">
-            <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider ml-1">Observações</label>
-            <textarea
-              value={formData.txObservacaoRevistoria || ""}
-              onChange={(e) => setFormData({ ...formData, txObservacaoRevistoria: e.target.value })}
-              className="w-full border border-slate-200 p-3 rounded-xl focus:ring-2 focus:ring-blue-500/20 outline-none h-24 resize-none shadow-sm"
-            />
+          {/* Botões ancorados na base */}
+          <div className="flex gap-3 pt-4 border-t border-slate-100 mt-4 shrink-0">
+            <button type="button" onClick={onClose} className="flex-1 border border-slate-200 font-bold text-slate-500 rounded-xl p-3 hover:bg-slate-50 text-sm">Cancelar</button>
+            <button type="submit" onClick={handleSubmit} className="flex-1 bg-blue-600 text-white font-bold rounded-xl p-3 shadow-lg hover:bg-blue-700 text-sm">Confirmar</button>
           </div>
+        </div>
 
-          <div className="flex gap-3 pt-4">
-            <button type="button" onClick={onClose} className="flex-1 border border-slate-200 font-bold text-slate-500 rounded-xl p-3 hover:bg-slate-50 transition-all">
-              Cancelar
-            </button>
-            <button type="submit" className="flex-1 bg-blue-600 text-white font-bold rounded-xl p-3 shadow-lg hover:bg-blue-700 transition-all active:scale-95">
-              Confirmar
-            </button>
-          </div>
-        </form>
+        {/* COLUNA DIREITA: Observações com flex-1 e min-h-0 para respeitar o limite */}
+        <div className="flex-1 w-full md:w-2/3 flex flex-col p-6 md:p-10 bg-slate-50 min-h-0">
+          <label className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-2 ml-1">Observações da Revistoria</label>
+          <textarea
+            value={formData.txObservacaoRevistoria || ""}
+            onChange={(e) => setFormData({ ...formData, txObservacaoRevistoria: e.target.value })}
+            className="flex-1 w-full p-4 md:p-6 text-sm text-slate-700 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500 outline-none resize-none shadow-sm leading-relaxed"
+            placeholder="Digite as observações aqui..."
+          />
+        </div>
       </div>
     </div>
   );
