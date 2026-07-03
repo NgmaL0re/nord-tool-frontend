@@ -146,16 +146,28 @@ export default function ApartmentModal({
               </div>
             </div>
 
-            <div className="space-y-1">
-              <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider ml-1">Status</label>
-              <select
-                value={formData.idStatusVistoria}
-                onChange={(e) => setFormData({ ...formData, idStatusVistoria: Number(e.target.value) })}
-                className="w-full border border-slate-200 p-3 rounded-xl focus:ring-2 focus:ring-blue-500/20 outline-none shadow-sm"
-              >
-                <option value={0}>Selecione...</option>
-                {statusList?.map((s) => <option key={s.idStatusVistoria} value={s.idStatusVistoria}>{s.nmStatusVistoria}</option>)}
-              </select>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-1">
+                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider ml-1">Status</label>
+                <select
+                  value={formData.idStatusVistoria}
+                  onChange={(e) => setFormData({ ...formData, idStatusVistoria: Number(e.target.value) })}
+                  className="w-full border border-slate-200 p-3 rounded-xl focus:ring-2 focus:ring-blue-500/20 outline-none shadow-sm"
+                >
+                  <option value={0}>Selecione...</option>
+                  {statusList?.map((s) => <option key={s.idStatusVistoria} value={s.idStatusVistoria}>{s.nmStatusVistoria}</option>)}
+                </select>
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider ml-1">Horário</label>
+                <input
+                  type="time"
+                  value={formData.nmHorarioVistoria}
+                  onChange={(e) => setFormData({ ...formData, nmHorarioVistoria: e.target.value })}
+                  className="w-full border border-slate-200 p-3 rounded-xl focus:ring-2 focus:ring-blue-500/20 outline-none shadow-sm"
+                />
+              </div>
             </div>
           </form>
 
