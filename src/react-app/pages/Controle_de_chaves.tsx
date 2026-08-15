@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { LayoutDashboard, Users, Archive, PlusCircle, Key, Box, CheckCircle, Clock, X, Edit2, Search, ChevronLeft, ChevronRight } from 'lucide-react';
 import { ColaboradorService, Colaborador } from '../services/ColaboradorService';
+import { OpcoesColaboradorService, type Empresa, type Cargo, type Permissao } from '../services/OpcoesColaboradorService';
 
 const App = () => {
   const [activeTab, setActiveTab] = useState('dashboard');
@@ -11,22 +12,30 @@ const App = () => {
 
   // Estado dos colaboradores carregados do banco
   const [colaboradores, setColaboradores] = useState<Colaborador[]>([]);
+  const [carregandoColaboradores, setCarregandoColaboradores] = useState(true);
+  const [erroColaboradores, setErroColaboradores] = useState<string | null>(null);
+  const [salvandoColaborador, setSalvandoColaborador] = useState(false);
+  const [empresas, setEmpresas] = useState<Empresa[]>([]);
+  const [cargos, setCargos] = useState<Cargo[]>([]);
+  const [permissoes, setPermissoes] = useState<Permissao[]>([]);
+  const [carregandoOpcoes, setCarregandoOpcoes] = useState(true);
+  const [erroOpcoes, setErroOpcoes] = useState<string | null>(null);
 
   // Estado do formulário de colaborador
   const [formData, setFormData] = useState<Colaborador>({
     nome: '',
     celular: '',
-    idEmpresa: 1,
-    idCargo: 1,
-    idPermissao: 1
+    idEmpresa: 0,
+    idCargo: 0,
+    idPermissao: 0
   });
 
-  const [retiradas, setRetiradas] = useState([
+  const [retiradas] = useState([
     { id: "RET-10001", data: "01/08/2026", apto: "EN-01-0101", retiradoPor: "João Silva", liberadoPor: "Admin" },
     { id: "RET-10002", data: "01/08/2026", apto: "EN-01-0204", retiradoPor: "Maria Souza", liberadoPor: "Admin" }
   ]);
 
-  const [historico, setHistorico] = useState(
+  const [historico] = useState(
     Array.from({ length: 45 }, (_, i) => ({
       id: `RET-${20000 + i}`,
       data: "30/07/2026",
@@ -38,16 +47,54 @@ const App = () => {
   );
 
   const carregarColaboradores = async () => {
+    setCarregandoColaboradores(true);
+    setErroColaboradores(null);
     try {
       const dados = await ColaboradorService.listar();
-      setColaboradores(dados);
+      setColaboradores(Array.isArray(dados) ? dados : []);
     } catch (err) {
       console.error("Erro ao carregar colaboradores:", err);
+      setColaboradores([]);
+      setErroColaboradores(err instanceof Error ? err.message : 'Erro ao carregar colaboradores.');
+    } finally {
+      setCarregandoColaboradores(false);
+    }
+  };
+
+  const carregarOpcoes = async () => {
+    setCarregandoOpcoes(true);
+    setErroOpcoes(null);
+    try {
+      const [novasEmpresas, novosCargos, novasPermissoes] = await Promise.all([
+        OpcoesColaboradorService.listarEmpresas(),
+        OpcoesColaboradorService.listarCargos(),
+        OpcoesColaboradorService.listarPermissoes(),
+      ]);
+      setEmpresas(novasEmpresas);
+      setCargos(novosCargos);
+      setPermissoes(novasPermissoes);
+
+      const listasVazias = [
+        novasEmpresas.length === 0 && 'empresas',
+        novosCargos.length === 0 && 'cargos',
+        novasPermissoes.length === 0 && 'permissões',
+      ].filter(Boolean);
+      if (listasVazias.length) {
+        setErroOpcoes(`Nenhuma opção encontrada para: ${listasVazias.join(', ')}.`);
+      }
+    } catch (err) {
+      setEmpresas([]);
+      setCargos([]);
+      setPermissoes([]);
+      setErroOpcoes(err instanceof Error ? err.message : 'Erro ao carregar as opções do colaborador.');
+    } finally {
+      setCarregandoOpcoes(false);
     }
   };
 
   useEffect(() => {
     carregarColaboradores();
+    carregarOpcoes();
   }, []);
 
   const paginatedHistorico = historico.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
@@ -63,23 +110,32 @@ const App = () => {
           id: colab.id,
           nome: colab.nome || '',
           celular: colab.celular || '',
-          idEmpresa: colab.idEmpresa || 1,
-          idCargo: colab.idCargo || 1,
-          idPermissao: colab.idPermissao || 1,
+          idEmpresa: colab.idEmpresa ?? 0,
+          idCargo: colab.idCargo ?? 0,
+          idPermissao: colab.idPermissao ?? 0,
         });
       } else {
-        setFormData({ nome: '', celular: '', idEmpresa: 1, idCargo: 1, idPermissao: 1 });
+        setFormData({
+          nome: '',
+          celular: '',
+          idEmpresa: empresas[0]?.id ?? 0,
+          idCargo: cargos[0]?.id ?? 0,
+          idPermissao: permissoes[0]?.id ?? 0,
+        });
       }
     }
   };
 
   const handleSalvarColaborador = async () => {
+    setSalvandoColaborador(true);
     try {
       await ColaboradorService.salvar(formData);
       await carregarColaboradores();
       setModalType(null);
     } catch (err) {
-      alert("Erro ao salvar colaborador no banco.");
+      setErroColaboradores(err instanceof Error ? err.message : 'Erro ao salvar colaborador no banco.');
+    } finally {
+      setSalvandoColaborador(false);
     }
   };
 
@@ -192,6 +248,15 @@ const App = () => {
             </div>
             
             <div className="min-w-[600px]">
+              {carregandoColaboradores && (
+                <p className="py-4 text-sm text-slate-500">Carregando colaboradores...</p>
+              )}
+              {erroColaboradores && (
+                <div className="mb-4 flex items-center justify-between gap-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+                  <span>{erroColaboradores}</span>
+                  <button onClick={carregarColaboradores} className="font-semibold hover:text-red-900">Tentar novamente</button>
+                </div>
+              )}
               <table className="w-full text-left">
                 <thead>
                   <tr className="text-slate-400 uppercase text-[10px] font-black tracking-widest border-b border-slate-100">
@@ -314,6 +379,15 @@ const App = () => {
             <div className="space-y-4">
               {modalType === 'colaborador' || modalType === 'editarColaborador' ? (
                 <>
+                  {carregandoOpcoes && (
+                    <p className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600">Carregando opções...</p>
+                  )}
+                  {erroOpcoes && !carregandoOpcoes && (
+                    <div className="flex items-center justify-between gap-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+                      <span>{erroOpcoes}</span>
+                      <button onClick={carregarOpcoes} className="shrink-0 font-semibold hover:text-red-900">Tentar novamente</button>
+                    </div>
+                  )}
                   <label className="block text-sm font-semibold text-slate-600">Nome Completo</label>
                   <input 
                     value={formData.nome} 
@@ -326,38 +400,42 @@ const App = () => {
                     onChange={e => setFormData({...formData, celular: e.target.value})}
                     className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-emerald-500" 
                   />
-                  <label className="block text-sm font-semibold text-slate-600">Empresa (ID)</label>
+                  <label className="block text-sm font-semibold text-slate-600">Empresa</label>
                   <select 
                     value={formData.idEmpresa} 
                     onChange={e => setFormData({...formData, idEmpresa: Number(e.target.value)})}
+                    disabled={carregandoOpcoes || empresas.length === 0}
                     className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-emerald-500"
                   >
-                    <option value={1}>Empresa 1</option>
-                    <option value={2}>Empresa 2</option>
+                    <option value={0} disabled>Selecione uma empresa</option>
+                    {empresas.map(empresa => <option key={empresa.id} value={empresa.id}>{empresa.nome}</option>)}
                   </select>
-                  <label className="block text-sm font-semibold text-slate-600">Cargo (ID)</label>
+                  <label className="block text-sm font-semibold text-slate-600">Cargo</label>
                   <select 
                     value={formData.idCargo} 
                     onChange={e => setFormData({...formData, idCargo: Number(e.target.value)})}
+                    disabled={carregandoOpcoes || cargos.length === 0}
                     className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-emerald-500"
                   >
-                    <option value={1}>Porteiro</option>
-                    <option value={2}>Zelador</option>
+                    <option value={0} disabled>Selecione um cargo</option>
+                    {cargos.map(cargo => <option key={cargo.id} value={cargo.id}>{cargo.nome}</option>)}
                   </select>
-                  <label className="block text-sm font-semibold text-slate-600">Permissão (ID)</label>
+                  <label className="block text-sm font-semibold text-slate-600">Permissão</label>
                   <select 
                     value={formData.idPermissao} 
                     onChange={e => setFormData({...formData, idPermissao: Number(e.target.value)})}
+                    disabled={carregandoOpcoes || permissoes.length === 0}
                     className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-emerald-500"
                   >
-                    <option value={1}>Retirar</option>
-                    <option value={2}>Liberar</option>
+                    <option value={0} disabled>Selecione uma permissão</option>
+                    {permissoes.map(permissao => <option key={permissao.id} value={permissao.id}>{permissao.nome}</option>)}
                   </select>
                   <button 
                     onClick={handleSalvarColaborador} 
-                    className="w-full bg-slate-900 hover:bg-slate-800 text-white font-bold py-3 rounded-xl mt-4 transition-colors"
+                    disabled={salvandoColaborador || carregandoOpcoes || !!erroOpcoes || !formData.idEmpresa || !formData.idCargo || !formData.idPermissao}
+                    className="w-full bg-slate-900 hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-50 text-white font-bold py-3 rounded-xl mt-4 transition-colors"
                   >
-                    Confirmar
+                    {salvandoColaborador ? 'Salvando...' : 'Confirmar'}
                   </button>
                 </>
               ) : modalType === 'retirada' ? (

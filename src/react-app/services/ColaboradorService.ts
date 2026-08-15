@@ -12,11 +12,32 @@ export interface Colaborador {
 
 const API_URL = '/api/colaboradores';
 
+type ApiResponseBody<T> = {
+  body?: T;
+};
+
+const lerJson = async (res: Response): Promise<unknown> => {
+  const texto = await res.text();
+  if (!texto.trim()) return null;
+
+  try {
+    return JSON.parse(texto) as unknown;
+  } catch {
+    throw new Error('Resposta inválida recebida do servidor');
+  }
+};
+
 export const ColaboradorService = {
   async listar(): Promise<Colaborador[]> {
     const res = await fetch(API_URL);
     if (!res.ok) throw new Error('Falha ao carregar colaboradores');
-    return res.json();
+
+    const json = await lerJson(res);
+    const conteudo = json && typeof json === 'object' && 'body' in json
+      ? (json as ApiResponseBody<unknown>).body
+      : json;
+
+    return Array.isArray(conteudo) ? conteudo as Colaborador[] : [];
   },
 
   async salvar(colaborador: Colaborador): Promise<void> {
@@ -29,6 +50,12 @@ export const ColaboradorService = {
       body: JSON.stringify(colaborador),
     });
 
-    if (!res.ok) throw new Error('Falha ao salvar colaborador');
+    if (!res.ok) {
+      const json = await lerJson(res);
+      const mensagem = json && typeof json === 'object' && 'txMensagem' in json
+        ? String(json.txMensagem)
+        : 'Falha ao salvar colaborador';
+      throw new Error(mensagem);
+    }
   }
 };
