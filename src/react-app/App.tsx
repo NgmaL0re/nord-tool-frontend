@@ -5,6 +5,7 @@ import DatabasePage from "@/react-app/pages/Database";
 import DashboardPage from "@/react-app/pages/Dashboard";
 import DeliveriesPage from "@/react-app/pages/Deliveries";
 import SettingsPage from "@/react-app/pages/Settings";
+import ControleChavesPage from "@/react-app/pages/Controle_de_chaves";
 import ConcretagemInProgress from "@/react-app/components/Placeholder";
 
 export default function App() {
@@ -28,6 +29,7 @@ export default function App() {
           <Route path="organizacional/diario-obras" element={<ConcretagemInProgress />} />
           <Route path="organizacional/escadinha" element={<ConcretagemInProgress />} />
           <Route path="organizacional/fluxograma" element={<ConcretagemInProgress />} />
+          <Route path="organizacional/controle-chaves" element={<ControleChavesPage />} />
           <Route path="treinamentos" element={<ConcretagemInProgress />} />
           <Route path="organizacional/fvs" element={<ConcretagemInProgress />} />
           <Route path="organizacional/projetos" element={<ConcretagemInProgress />} />
