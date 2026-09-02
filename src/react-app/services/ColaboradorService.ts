@@ -14,6 +14,15 @@ const API_URL = '/api/colaboradores';
 
 type ApiResponseBody<T> = {
   body?: T;
+  txMensagem?: string;
+};
+
+const criarErroHttp = (res: Response, json: unknown, fallback: string): Error => {
+  const resposta = json && typeof json === 'object' ? json as ApiResponseBody<unknown> : null;
+  const mensagem = resposta?.txMensagem || fallback;
+  const causa = typeof resposta?.body === 'string' ? `: ${resposta.body}` : '';
+
+  return new Error(`${mensagem} (HTTP ${res.status})${causa}`);
 };
 
 const lerJson = async (res: Response): Promise<unknown> => {
@@ -30,9 +39,9 @@ const lerJson = async (res: Response): Promise<unknown> => {
 export const ColaboradorService = {
   async listar(): Promise<Colaborador[]> {
     const res = await fetch(API_URL);
-    if (!res.ok) throw new Error('Falha ao carregar colaboradores');
-
     const json = await lerJson(res);
+    if (!res.ok) throw criarErroHttp(res, json, 'Falha ao carregar colaboradores');
+
     const conteudo = json && typeof json === 'object' && 'body' in json
       ? (json as ApiResponseBody<unknown>).body
       : json;
@@ -52,10 +61,7 @@ export const ColaboradorService = {
 
     if (!res.ok) {
       const json = await lerJson(res);
-      const mensagem = json && typeof json === 'object' && 'txMensagem' in json
-        ? String(json.txMensagem)
-        : 'Falha ao salvar colaborador';
-      throw new Error(mensagem);
+      throw criarErroHttp(res, json, 'Falha ao salvar colaborador');
     }
   }
 };

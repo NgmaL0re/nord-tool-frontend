@@ -23,10 +23,10 @@ const listarOpcoes = async <T extends OpcaoColaborador>(endpoint: string, descri
   }
 
   if (!res.ok) {
-    const mensagem = json && typeof json === 'object' && 'txMensagem' in json
-      ? String(json.txMensagem)
-      : `Falha ao carregar ${descricao}`;
-    throw new Error(mensagem);
+    const resposta = json && typeof json === 'object' ? json as ApiResponseBody<unknown> : null;
+    const mensagem = resposta?.txMensagem || `Falha ao carregar ${descricao}`;
+    const causa = typeof resposta?.body === 'string' ? `: ${resposta.body}` : '';
+    throw new Error(`${mensagem} (HTTP ${res.status})${causa}`);
   }
 
   const conteudo = json && typeof json === 'object' && 'body' in json
