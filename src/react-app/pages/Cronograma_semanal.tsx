@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { CalendarDays, LayoutGrid, List, Briefcase, Star, Plus, Minus } from "lucide-react";
+import { CalendarDays, LayoutGrid, List, Briefcase, Star, Minus } from "lucide-react";
 
 const cronograma = [
   { id: 1, dia: "Segunda", hora: "07:30", titulo: "Alinhamento com Hulk & Tainá", tag: "TRABALHO", icon: <Briefcase size={14}/> },

@@ -1,7 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { CheckCircle2, XCircle, Clock, Home, Loader2, AlertCircle, RotateCcw, CalendarDays } from "lucide-react";
 import type { DashboardStats } from "@/shared/types";
-import { apartamentoVistoriaService } from "@/react-app/services/ApartamentoVistoriaService";
 
 export default function DashboardPage() {
   const [stats, setStats] = useState<DashboardStats | null>(null);
@@ -15,32 +14,22 @@ export default function DashboardPage() {
     setLoading(true);
     setError(null);
     try {
-      const apartamentos = await apartamentoVistoriaService.listar();
-      const filtrados = apartamentos.filter((apartamento) => {
-        const nome = apartamento.nmApartamentoVistoria?.toUpperCase() ?? "";
-        const data = apartamento.dtApartamentoVigente?.slice(0, 10) ?? "";
+      const params = new URLSearchParams();
+      if (startDate) params.append("startDate", startDate);
+      if (endDate) params.append("endDate", endDate);
+      if (selectedCondo) params.append("condo", selectedCondo);
 
-        if (selectedCondo && !nome.startsWith(selectedCondo)) return false;
-        if (startDate && (!data || data < startDate)) return false;
-        if (endDate && (!data || data > endDate)) return false;
-        return true;
-      });
+      const response = await fetch(`/api/dashboard?${params.toString()}`);
+      const json = await response.json();
+      // Backend uses ApiResponseBody wrapper: { timestamp, nrStatus, body, txMensagem }
+      const payload = json?.body ?? json;
 
-      const contarStatus = (status: string) => filtrados.filter(
-        (apartamento) => apartamento.nmStatusVistoria
-          ?.localeCompare(status, "pt-BR", { sensitivity: "base" }) === 0
-      ).length;
+      // Validate payload shape minimally
+      if (!payload || typeof payload !== "object") {
+        throw new Error("Resposta do dashboard inválida");
+      }
 
-      setStats({
-        total: filtrados.length,
-        total_cadastrados: apartamentos.length,
-        nao_liberados: contarStatus("Não Liberado"),
-        agendados: contarStatus("Agendado"),
-        liberados: contarStatus("Liberado"),
-        aprovados: contarStatus("Aprovado"),
-        reprovados: contarStatus("Reprovado"),
-        pendentes: contarStatus("Pendente"),
-      });
+      setStats(payload as DashboardStats);
     } catch (error) {
       console.error("Erro ao carregar estatísticas:", error);
       setStats(null);
