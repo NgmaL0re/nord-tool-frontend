@@ -1,3 +1,5 @@
+import { API_BASE } from "./ApiBase";
+
 export interface ApartamentoControleChaves { id: number; label: string }
 export interface ObraControleChaves { id: string; nome: string }
 export interface PessoaControleChaves { id: number; nome: string; permissao?: string }
@@ -16,10 +18,7 @@ export interface RecebimentoControleChaves { idRecebedor: number }
 
 interface ApiResponse<T> { body?: T; txMensagem?: string; error?: string }
 const CHAVES_LISTA_OBRAS = ['obras', 'items', 'content', 'data'] as const;
-const API_BASE = ((import.meta.env.VITE_API_URL as string | undefined) ?? '')
-  .replace(/\/+$/, '')
-  .replace(/\/api$/, '');
-const API_URL = `${API_BASE}/api/controle-chaves`;
+const API_URL = `${API_BASE}/controle-chaves`;
 
 const normalizarListaObras = (conteudo: unknown): ObraControleChaves[] => {
   if (Array.isArray(conteudo)) return conteudo as ObraControleChaves[];
