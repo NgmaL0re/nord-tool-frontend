@@ -1,3 +1,5 @@
+import { API_BASE } from "./ApiBase";
+
 export interface Empresa { id: number; nome: string; }
 export interface Cargo { id: number; nome: string; }
 export interface Permissao { id: number; nome: string; }
@@ -9,17 +11,7 @@ interface ApiResponseBody<T> {
 
 type OpcaoColaborador = Empresa | Cargo | Permissao;
 
-const API_BASE = (
-  import.meta.env.DEV
-    ? '/api/v1/nord-tool'
-    : (import.meta.env.VITE_API_URL as string | undefined) || ''
-).replace(/\/+$/, '').replace(/\/api$/, '');
-
 const listarOpcoes = async <T extends OpcaoColaborador>(endpoint: string, descricao: string): Promise<T[]> => {
-  if (!API_BASE) {
-    throw new Error('VITE_API_URL não configurada para a API de Controle de Chaves');
-  }
-
   const res = await fetch(`${API_BASE}${endpoint}`);
   const texto = await res.text();
   let json: ApiResponseBody<unknown> | unknown = null;
@@ -46,7 +38,7 @@ const listarOpcoes = async <T extends OpcaoColaborador>(endpoint: string, descri
 };
 
 export const OpcoesColaboradorService = {
-  listarEmpresas: () => listarOpcoes<Empresa>('/api/empresas', 'empresas'),
-  listarCargos: () => listarOpcoes<Cargo>('/api/cargos', 'cargos'),
-  listarPermissoes: () => listarOpcoes<Permissao>('/api/permissoes', 'permissões'),
+  listarEmpresas: () => listarOpcoes<Empresa>('/empresas', 'empresas'),
+  listarCargos: () => listarOpcoes<Cargo>('/cargos', 'cargos'),
+  listarPermissoes: () => listarOpcoes<Permissao>('/permissoes', 'permissões'),
 };
