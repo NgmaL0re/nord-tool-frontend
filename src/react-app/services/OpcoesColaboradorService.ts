@@ -10,8 +10,9 @@ interface ApiResponseBody<T> {
 type OpcaoColaborador = Empresa | Cargo | Permissao;
 
 const API_BASE = (
-  (import.meta.env.VITE_API_URL as string | undefined)
-  || (import.meta.env.DEV ? 'http://localhost:8081/api/v1/nord-tool' : '')
+  import.meta.env.DEV
+    ? '/api/v1/nord-tool'
+    : (import.meta.env.VITE_API_URL as string | undefined) || ''
 ).replace(/\/$/, '');
 
 const listarOpcoes = async <T extends OpcaoColaborador>(endpoint: string, descricao: string): Promise<T[]> => {
