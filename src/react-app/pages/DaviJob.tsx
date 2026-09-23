@@ -12,28 +12,39 @@ const tarefasDaSemana = [
 
 function BolinhoCorner() {
   return (
-    <div className="bolinho-corner" aria-hidden="true">
-      <div className="bolinho-yarn">
-        <span className="bolinho-yarn__thread bolinho-yarn__thread--one" />
-        <span className="bolinho-yarn__thread bolinho-yarn__thread--two" />
-      </div>
-
-      <svg viewBox="0 0 180 132" role="presentation">
-        <path className="bolinho-tail" d="M127 91c42 5 42-39 13-38-11 0-18 9-15 18" />
-        <ellipse className="bolinho-body" cx="88" cy="91" rx="47" ry="30" />
-        <path className="bolinho-head" d="M47 68 42 28l27 18a54 54 0 0 1 39 0l27-18-5 40c9 8 14 18 14 30 0 25-24 39-54 39S36 123 36 98c0-12 5-22 11-30Z" />
-        <path className="bolinho-ear" d="m51 45-3-10 18 13m43 0 18-13-3 10" />
-        <ellipse className="bolinho-eye" cx="69" cy="77" rx="9" ry="11" />
-        <ellipse className="bolinho-eye" cx="108" cy="77" rx="9" ry="11" />
-        <circle className="bolinho-pupil" cx="70" cy="79" r="4.4" />
-        <circle className="bolinho-pupil" cx="107" cy="79" r="4.4" />
-        <circle className="bolinho-eye-shine" cx="72" cy="76" r="1.8" />
-        <circle className="bolinho-eye-shine" cx="109" cy="76" r="1.8" />
-        <path className="bolinho-nose" d="m87 91 4-3 4 3-4 3Z" />
-        <path className="bolinho-mouth" d="M91 94v3m0 0c-3 3-6 3-8 0m8 0c3 3 6 3 8 0" />
-        <path className="bolinho-whiskers" d="m78 94-27-6m27 12-28 2m54-8 27-6m-27 12 28 2" />
-        <path className="bolinho-paw bolinho-paw--back" d="M54 111c0 13 17 14 21 3" />
-        <path className="bolinho-paw bolinho-paw--front" d="M110 109c8 2 16 8 20 15" />
+    <div className="bolinho-pet" aria-hidden="true">
+      <span className="bolinho-pet__thread" />
+      <span className="bolinho-pet__yarn" />
+      <svg className="bolinho-pet__sprite" viewBox="0 0 64 48" role="presentation">
+        <g className="bolinho-pet__tail">
+          <rect x="47" y="27" width="8" height="5" fill="#6d4936" />
+          <rect x="53" y="22" width="5" height="8" fill="#6d4936" />
+          <rect x="57" y="18" width="4" height="7" fill="#6d4936" />
+          <rect x="58" y="17" width="4" height="3" fill="#edcfaa" />
+        </g>
+        <rect x="16" y="24" width="35" height="15" fill="#6d4936" />
+        <rect x="18" y="22" width="29" height="18" fill="#edcfaa" />
+        <rect x="19" y="38" width="10" height="4" fill="#6d4936" />
+        <rect x="31" y="38" width="10" height="4" fill="#6d4936" />
+        <rect x="20" y="37" width="9" height="4" fill="#f7dfbc" />
+        <rect x="32" y="37" width="9" height="4" fill="#f7dfbc" />
+        <rect x="13" y="8" width="5" height="12" fill="#6d4936" />
+        <rect x="17" y="11" width="32" height="20" fill="#6d4936" />
+        <rect x="20" y="6" width="8" height="8" fill="#6d4936" />
+        <rect x="39" y="6" width="8" height="8" fill="#6d4936" />
+        <rect x="18" y="12" width="30" height="18" fill="#edcfaa" />
+        <rect x="21" y="10" width="6" height="5" fill="#f2a1a5" />
+        <rect x="40" y="10" width="6" height="5" fill="#f2a1a5" />
+        <rect x="23" y="18" width="7" height="7" fill="#754426" />
+        <rect x="37" y="18" width="7" height="7" fill="#754426" />
+        <rect className="bolinho-pet__blink" x="23" y="21" width="7" height="2" fill="#2a1b17" />
+        <rect className="bolinho-pet__blink" x="37" y="21" width="7" height="2" fill="#2a1b17" />
+        <rect x="25" y="19" width="2" height="2" fill="#fff" />
+        <rect x="39" y="19" width="2" height="2" fill="#fff" />
+        <rect x="32" y="25" width="4" height="3" fill="#e88596" />
+        <rect x="31" y="28" width="2" height="2" fill="#6d4936" />
+        <rect x="35" y="28" width="2" height="2" fill="#6d4936" />
+        <rect className="bolinho-pet__paw" x="13" y="34" width="10" height="5" fill="#edcfaa" />
       </svg>
     </div>
   );
