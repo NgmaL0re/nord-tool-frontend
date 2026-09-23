@@ -4,7 +4,7 @@ import {
   Database, BarChart3, Package, Settings, Menu, ChevronLeft, 
   Home as HomeIcon, Briefcase, GraduationCap,
   ClipboardCheck, AlertTriangle, Camera, FileText, BookOpen, 
-  TrendingUp, GitMerge, FileCheck, CalendarDays, Wallet, Dumbbell, Music, Book, Key
+  TrendingUp, GitMerge, FileCheck, CalendarDays, Wallet, Dumbbell, Music, Book, Key, Bot
 } from "lucide-react";
 
 export default function Layout() {
@@ -45,6 +45,12 @@ export default function Layout() {
         { path: "/organizacional/fvs", label: "Controle de FVs", icon: FileCheck },
         { path: "/organizacional/projetos", label: "Controle de projetos", icon: Briefcase },
         { path: "/organizacional/cronograma", label: "Cronograma semanal", icon: CalendarDays },
+      ]
+    },
+    {
+      title: "Lugia Nexus",
+      items: [
+        { path: "/lugia-nexus", label: "Abrir ChatGPT", icon: Bot, externalUrl: "https://chatgpt.com/" },
       ]
     },
     {
@@ -89,7 +95,20 @@ export default function Layout() {
                   {group.title}
                 </h3>
                 <div className="space-y-1">
-                  {group.items.map((item) => (
+                  {group.items.map((item) => item.externalUrl ? (
+                    <button
+                      key={item.path}
+                      type="button"
+                      onClick={() => {
+                        window.open(item.externalUrl, "LugiaNexusChat", "popup=yes,width=1180,height=820,noopener,noreferrer");
+                        setSidebarOpen(false);
+                      }}
+                      className="flex w-full items-center gap-3 px-3 py-2.5 rounded-xl text-left text-sm font-medium text-slate-600 transition-all duration-200 hover:bg-slate-50 hover:text-blue-600"
+                    >
+                      <item.icon className="w-4 h-4" />
+                      <span>{item.label}</span>
+                    </button>
+                  ) : (
                     <NavLink
                       key={item.path}
                       to={item.path}
