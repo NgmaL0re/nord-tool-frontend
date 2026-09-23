@@ -2,127 +2,119 @@
   position: relative;
 }
 
-.bolinho-corner {
+.bolinho-pet {
   position: fixed;
-  right: clamp(0.75rem, 2vw, 1.75rem);
-  bottom: 0.55rem;
+  right: 0.85rem;
+  bottom: 0.3rem;
   z-index: 30;
-  width: clamp(8.7rem, 15vw, 11.5rem);
+  width: 7rem;
+  height: 5.5rem;
   pointer-events: none;
-  filter: drop-shadow(0 7px 5px rgb(15 23 42 / 0.16));
+  image-rendering: pixelated;
 }
 
-.bolinho-corner svg {
+.bolinho-pet__sprite {
+  position: absolute;
+  right: 0;
+  bottom: 0;
   display: block;
-  width: 100%;
+  width: 5.55rem;
   height: auto;
   overflow: visible;
-  transform-origin: 54% 92%;
-  animation: bolinho-breathe 2.8s ease-in-out infinite;
+  filter: drop-shadow(2px 3px 0 rgb(15 23 42 / 0.2));
+  animation: bolinho-idle 1.25s steps(2, end) infinite;
 }
 
-.bolinho-yarn {
+.bolinho-pet__tail {
+  transform-box: fill-box;
+  transform-origin: left bottom;
+  animation: bolinho-tail 0.7s steps(2, end) infinite alternate;
+}
+
+.bolinho-pet__paw {
+  transform-box: fill-box;
+  transform-origin: right center;
+  animation: bolinho-paw 1.35s steps(3, end) infinite;
+}
+
+.bolinho-pet__blink {
+  opacity: 0;
+  animation: bolinho-blink 4s steps(1, end) infinite;
+}
+
+.bolinho-pet__yarn {
   position: absolute;
-  right: 5%;
-  bottom: 1%;
-  width: 2.35rem;
-  aspect-ratio: 1;
-  border: 3px solid #be185d;
+  left: 0.1rem;
+  bottom: 0.18rem;
+  width: 1.4rem;
+  height: 1.4rem;
+  border: 3px solid #8f174c;
   border-radius: 50%;
   background:
-    repeating-linear-gradient(142deg, transparent 0 5px, rgb(255 255 255 / 0.52) 6px 8px, transparent 9px 12px),
-    #f472b6;
-  box-shadow: inset -7px -7px 0 rgb(190 24 93 / 0.2);
-  animation: bolinho-yarn-roll 2.7s ease-in-out infinite;
+    linear-gradient(45deg, transparent 42%, #fbcfe8 43% 53%, transparent 54%),
+    linear-gradient(-45deg, transparent 42%, #fbcfe8 43% 53%, transparent 54%),
+    #ec4899;
+  box-shadow: inset -3px -3px 0 #be185d;
+  animation: bolinho-yarn 1.35s steps(4, end) infinite;
 }
 
-.bolinho-yarn__thread {
+.bolinho-pet__thread {
   position: absolute;
-  height: 2px;
-  width: 3.6rem;
-  background: #be185d;
+  bottom: 1.3rem;
+  left: 1.15rem;
+  width: 3rem;
+  height: 1.2rem;
+  border-top: 2px solid #be185d;
+  border-radius: 50%;
+  transform: rotate(-18deg);
   transform-origin: left center;
+  animation: bolinho-thread 1.35s steps(4, end) infinite;
 }
 
-.bolinho-yarn__thread--one {
-  top: 16%;
-  right: 80%;
-  transform: rotate(-30deg);
+@keyframes bolinho-idle {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-3px); }
 }
 
-.bolinho-yarn__thread--two {
-  top: 55%;
-  right: 75%;
-  transform: rotate(21deg);
+@keyframes bolinho-tail {
+  from { transform: rotate(-10deg); }
+  to { transform: rotate(17deg); }
 }
 
-.bolinho-tail,
-.bolinho-mouth,
-.bolinho-whiskers,
-.bolinho-paw {
-  fill: none;
-  stroke-linecap: round;
-  stroke-linejoin: round;
+@keyframes bolinho-paw {
+  0%, 42%, 100% { transform: rotate(0); }
+  57%, 70% { transform: rotate(-35deg) translate(-5px, -3px); }
 }
 
-.bolinho-tail {
-  stroke: #9a6b48;
-  stroke-width: 8;
-  animation: bolinho-tail-swish 1.4s ease-in-out infinite alternate;
-  transform-origin: 122px 86px;
+@keyframes bolinho-yarn {
+  0%, 35%, 100% { transform: translateX(0) rotate(0); }
+  55%, 72% { transform: translateX(1.45rem) rotate(180deg); }
 }
 
-.bolinho-body,
-.bolinho-head {
-  fill: #edd2af;
-  stroke: #9a6b48;
-  stroke-width: 3;
-  stroke-linejoin: round;
+@keyframes bolinho-thread {
+  0%, 35%, 100% { transform: rotate(-18deg) scaleX(1); }
+  55%, 72% { transform: rotate(-28deg) scaleX(1.25); }
 }
 
-.bolinho-ear { fill: none; stroke: #e8a5a5; stroke-width: 4; stroke-linecap: round; }
-
-.bolinho-eye { fill: #7c4a2d; stroke: #59341f; stroke-width: 1.5; }
-.bolinho-pupil { fill: #1f2937; }
-.bolinho-eye-shine { fill: #fff; }
-.bolinho-nose { fill: #ef8f9d; stroke: #b85a6a; stroke-width: 1; }
-.bolinho-mouth { stroke: #7c4a2d; stroke-width: 2; }
-.bolinho-whiskers { stroke: #9a6b48; stroke-width: 1.5; }
-
-.bolinho-paw { stroke: #9a6b48; stroke-width: 5; }
-.bolinho-paw--front {
-  animation: bolinho-paw-play 1.35s ease-in-out infinite;
-  transform-origin: 111px 109px;
-}
-
-@keyframes bolinho-breathe {
-  0%, 100% { transform: translateY(0) rotate(-1deg); }
-  50% { transform: translateY(-3px) rotate(1deg); }
-}
-
-@keyframes bolinho-yarn-roll {
-  0%, 100% { transform: translateX(0) rotate(0deg); }
-  45% { transform: translateX(-1.6rem) rotate(-190deg); }
-  58% { transform: translateX(-1.6rem) rotate(-230deg); }
-}
-
-@keyframes bolinho-paw-play {
-  0%, 25%, 100% { transform: rotate(0deg); }
-  52% { transform: rotate(-24deg) translate(-3px, -5px); }
-}
-
-@keyframes bolinho-tail-swish {
-  from { transform: rotate(-6deg); }
-  to { transform: rotate(13deg); }
+@keyframes bolinho-blink {
+  0%, 91%, 100% { opacity: 0; }
+  93%, 97% { opacity: 1; }
 }
 
 @media (max-width: 640px) {
-  .bolinho-corner { width: 7.4rem; right: 0.35rem; bottom: 0.25rem; }
+  .bolinho-pet {
+    right: 0.25rem;
+    bottom: 0.1rem;
+    transform: scale(0.84);
+    transform-origin: right bottom;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .bolinho-corner svg,
-  .bolinho-yarn,
-  .bolinho-paw--front,
-  .bolinho-tail { animation: none; }
+  .bolinho-pet__sprite,
+  .bolinho-pet__tail,
+  .bolinho-pet__paw,
+  .bolinho-pet__blink,
+  .bolinho-pet__yarn,
+  .bolinho-pet__thread { animation: none; }
 }
