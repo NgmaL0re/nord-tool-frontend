@@ -24,14 +24,14 @@ function BolinhoCorner() {
         </g>
         <rect x="16" y="24" width="35" height="15" fill="#6d4936" />
         <rect x="18" y="22" width="29" height="18" fill="#edcfaa" />
-        <rect x="19" y="38" width="10" height="4" fill="#6d4936" />
-        <rect x="31" y="38" width="10" height="4" fill="#6d4936" />
-        <rect x="20" y="37" width="9" height="4" fill="#f7dfbc" />
-        <rect x="32" y="37" width="9" height="4" fill="#f7dfbc" />
+        <rect className="bolinho-pet__leg bolinho-pet__leg--back" x="19" y="38" width="10" height="4" fill="#6d4936" />
+        <rect className="bolinho-pet__leg bolinho-pet__leg--front" x="31" y="38" width="10" height="4" fill="#6d4936" />
+        <rect className="bolinho-pet__leg bolinho-pet__leg--back" x="20" y="37" width="9" height="4" fill="#f7dfbc" />
+        <rect className="bolinho-pet__leg bolinho-pet__leg--front" x="32" y="37" width="9" height="4" fill="#f7dfbc" />
         <rect x="13" y="8" width="5" height="12" fill="#6d4936" />
         <rect x="17" y="11" width="32" height="20" fill="#6d4936" />
-        <rect x="20" y="6" width="8" height="8" fill="#6d4936" />
-        <rect x="39" y="6" width="8" height="8" fill="#6d4936" />
+        <rect className="bolinho-pet__ear" x="20" y="6" width="8" height="8" fill="#6d4936" />
+        <rect className="bolinho-pet__ear" x="39" y="6" width="8" height="8" fill="#6d4936" />
         <rect x="18" y="12" width="30" height="18" fill="#edcfaa" />
         <rect x="21" y="10" width="6" height="5" fill="#f2a1a5" />
         <rect x="40" y="10" width="6" height="5" fill="#f2a1a5" />
