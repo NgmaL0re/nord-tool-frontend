@@ -10,22 +10,31 @@ const tarefasDaSemana = [
   { dia: "Domingo", tarefa: "Descanso" },
 ];
 
-function WalkingCat() {
+function BolinhoCorner() {
   return (
-    <div className="davi-job-cat-track" aria-hidden="true">
-      <div className="davi-job-cat">
-        <svg viewBox="0 0 92 58" role="presentation">
-          <path className="davi-job-cat__tail" d="M70 35c17 3 18-15 9-18" />
-          <path
-            className="davi-job-cat__body"
-            d="M23 23 18 8l14 8a29 29 0 0 1 23 0l14-8-5 15c5 4 8 9 8 16 0 10-11 15-26 15S17 49 17 39c0-7 2-12 6-16Z"
-          />
-          <path className="davi-job-cat__inner-ear" d="m23 18-2-5 8 5m24 0 8-5-2 5" />
-          <path className="davi-job-cat__face" d="M34 31h.1m23 0h.1M43 38c2 2 4 2 6 0" />
-          <path className="davi-job-cat__whiskers" d="m36 37-11-3m11 7-11 2m23-6 11-3m-11 7 11 2" />
-          <path className="davi-job-cat__legs" d="M30 50v5m11-4v4m13-5v5m9-7v5" />
-        </svg>
+    <div className="bolinho-corner" aria-hidden="true">
+      <div className="bolinho-yarn">
+        <span className="bolinho-yarn__thread bolinho-yarn__thread--one" />
+        <span className="bolinho-yarn__thread bolinho-yarn__thread--two" />
       </div>
+
+      <svg viewBox="0 0 180 132" role="presentation">
+        <path className="bolinho-tail" d="M127 91c42 5 42-39 13-38-11 0-18 9-15 18" />
+        <ellipse className="bolinho-body" cx="88" cy="91" rx="47" ry="30" />
+        <path className="bolinho-head" d="M47 68 42 28l27 18a54 54 0 0 1 39 0l27-18-5 40c9 8 14 18 14 30 0 25-24 39-54 39S36 123 36 98c0-12 5-22 11-30Z" />
+        <path className="bolinho-ear" d="m51 45-3-10 18 13m43 0 18-13-3 10" />
+        <ellipse className="bolinho-eye" cx="69" cy="77" rx="9" ry="11" />
+        <ellipse className="bolinho-eye" cx="108" cy="77" rx="9" ry="11" />
+        <circle className="bolinho-pupil" cx="70" cy="79" r="4.4" />
+        <circle className="bolinho-pupil" cx="107" cy="79" r="4.4" />
+        <circle className="bolinho-eye-shine" cx="72" cy="76" r="1.8" />
+        <circle className="bolinho-eye-shine" cx="109" cy="76" r="1.8" />
+        <path className="bolinho-nose" d="m87 91 4-3 4 3-4 3Z" />
+        <path className="bolinho-mouth" d="M91 94v3m0 0c-3 3-6 3-8 0m8 0c3 3 6 3 8 0" />
+        <path className="bolinho-whiskers" d="m78 94-27-6m27 12-28 2m54-8 27-6m-27 12 28 2" />
+        <path className="bolinho-paw bolinho-paw--back" d="M54 111c0 13 17 14 21 3" />
+        <path className="bolinho-paw bolinho-paw--front" d="M110 109c8 2 16 8 20 15" />
+      </svg>
     </div>
   );
 }
@@ -36,8 +45,6 @@ export default function DaviJobPage() {
       <h1 className="mb-8 text-3xl font-bold text-slate-800">Davi Job</h1>
 
       <div className="davi-job-table-stage">
-        <WalkingCat />
-
         <div className="overflow-hidden rounded-xl border border-slate-100 bg-white shadow-lg">
           <div className="overflow-x-auto">
             <table className="w-full">
@@ -63,6 +70,8 @@ export default function DaviJobPage() {
           </div>
         </div>
       </div>
+
+      <BolinhoCorner />
     </div>
   );
 }
