@@ -23,6 +23,7 @@ export default function Layout() {
         { path: "/entregas", label: "Agenda", icon: Package },
         { path: "/database", label: "Banco de Dados", icon: Database },
         { path: "/dashboard", label: "Dashboard", icon: BarChart3 },
+        { path: "/davi-job", label: "Davi Job", icon: Briefcase },
       ]
     },
     {

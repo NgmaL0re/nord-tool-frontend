@@ -8,6 +8,7 @@ import SettingsPage from "@/react-app/pages/Settings";
 import CronogramaPage from "@/react-app/pages/Cronograma_semanal";
 import ControleChavesPage from "@/react-app/pages/Controle_de_chaves";
 import ConcretagemInProgress from "@/react-app/components/Placeholder";
+import DaviJobPage from "@/react-app/pages/DaviJob";
 
 export default function App() {
   return (
@@ -19,6 +20,7 @@ export default function App() {
           <Route path="database" element={<DatabasePage />} />
           <Route path="dashboard" element={<DashboardPage />} />
           <Route path="configuracoes" element={<SettingsPage />} />
+          <Route path="davi-job" element={<DaviJobPage />} />
 
           {/* Mapeamentos */}
           <Route path="mapeamentos/conferencias" element={<ConcretagemInProgress />} />
