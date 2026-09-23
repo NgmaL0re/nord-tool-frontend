@@ -1,0 +1,70 @@
+.davi-job-table-stage {
+  position: relative;
+  padding-top: 3.25rem;
+  overflow: hidden;
+}
+
+.davi-job-cat-track {
+  position: absolute;
+  top: 0.1rem;
+  left: 0;
+  width: 3.9rem;
+  pointer-events: none;
+  animation: davi-job-cat-walk 15s linear infinite alternate;
+  z-index: 1;
+}
+
+.davi-job-cat {
+  color: #64748b;
+  filter: drop-shadow(0 3px 2px rgb(15 23 42 / 0.14));
+  animation: davi-job-cat-step 0.44s ease-in-out infinite alternate;
+  transform-origin: center bottom;
+}
+
+.davi-job-cat svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+}
+
+.davi-job-cat__body {
+  fill: #f8fafc;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linejoin: round;
+}
+
+.davi-job-cat__tail,
+.davi-job-cat__inner-ear,
+.davi-job-cat__face,
+.davi-job-cat__whiskers,
+.davi-job-cat__legs {
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.davi-job-cat__tail { stroke-width: 3; }
+.davi-job-cat__inner-ear { stroke: #f59e0b; stroke-width: 1.6; }
+.davi-job-cat__face { stroke: #334155; stroke-width: 3.2; }
+.davi-job-cat__whiskers { stroke: #b45309; stroke-width: 1.5; }
+.davi-job-cat__legs { stroke-width: 2.4; }
+
+@keyframes davi-job-cat-walk {
+  from { transform: translateX(-4.25rem); }
+  to { transform: translateX(calc(100vw - 7rem)); }
+}
+
+@keyframes davi-job-cat-step {
+  from { transform: translateY(0) rotate(-1.5deg); }
+  to { transform: translateY(-0.2rem) rotate(1.5deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .davi-job-cat-track,
+  .davi-job-cat { animation: none; }
+
+  .davi-job-cat-track { transform: translateX(0.75rem); }
+}
