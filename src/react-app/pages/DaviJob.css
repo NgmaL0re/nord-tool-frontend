@@ -7,7 +7,7 @@
   right: 0.85rem;
   bottom: 0.3rem;
   z-index: 30;
-  width: 7rem;
+  width: 8.6rem;
   height: 5.5rem;
   pointer-events: none;
   image-rendering: pixelated;
@@ -22,24 +22,24 @@
   height: auto;
   overflow: visible;
   filter: drop-shadow(2px 3px 0 rgb(15 23 42 / 0.2));
-  animation: bolinho-idle 1.25s steps(2, end) infinite;
+  animation: bolinho-play 3.8s steps(8, end) infinite;
 }
 
 .bolinho-pet__tail {
   transform-box: fill-box;
   transform-origin: left bottom;
-  animation: bolinho-tail 0.7s steps(2, end) infinite alternate;
+  animation: bolinho-tail 0.45s steps(2, end) infinite alternate;
 }
 
 .bolinho-pet__paw {
   transform-box: fill-box;
   transform-origin: right center;
-  animation: bolinho-paw 1.35s steps(3, end) infinite;
+  animation: bolinho-paw 3.8s steps(8, end) infinite;
 }
 
 .bolinho-pet__blink {
   opacity: 0;
-  animation: bolinho-blink 4s steps(1, end) infinite;
+  animation: bolinho-blink 3.8s steps(1, end) infinite;
 }
 
 .bolinho-pet__yarn {
@@ -55,7 +55,7 @@
     linear-gradient(-45deg, transparent 42%, #fbcfe8 43% 53%, transparent 54%),
     #ec4899;
   box-shadow: inset -3px -3px 0 #be185d;
-  animation: bolinho-yarn 1.35s steps(4, end) infinite;
+  animation: bolinho-yarn 3.8s steps(8, end) infinite;
 }
 
 .bolinho-pet__thread {
@@ -66,39 +66,42 @@
   height: 1.2rem;
   border-top: 2px solid #be185d;
   border-radius: 50%;
-  transform: rotate(-18deg);
   transform-origin: left center;
-  animation: bolinho-thread 1.35s steps(4, end) infinite;
+  animation: bolinho-thread 3.8s steps(8, end) infinite;
 }
 
-@keyframes bolinho-idle {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-3px); }
+@keyframes bolinho-play {
+  0%, 18%, 100% { transform: translate(0, 0); }
+  28%, 42% { transform: translate(-1.3rem, -0.28rem); }
+  52%, 65% { transform: translate(-2.65rem, 0); }
+  76% { transform: translate(-1.25rem, -0.28rem); }
 }
 
 @keyframes bolinho-tail {
-  from { transform: rotate(-10deg); }
-  to { transform: rotate(17deg); }
+  from { transform: rotate(-12deg); }
+  to { transform: rotate(20deg); }
 }
 
 @keyframes bolinho-paw {
   0%, 42%, 100% { transform: rotate(0); }
-  57%, 70% { transform: rotate(-35deg) translate(-5px, -3px); }
+  52%, 63% { transform: rotate(-42deg) translate(-6px, -5px); }
 }
 
 @keyframes bolinho-yarn {
-  0%, 35%, 100% { transform: translateX(0) rotate(0); }
-  55%, 72% { transform: translateX(1.45rem) rotate(180deg); }
+  0%, 43%, 100% { transform: translateX(0) rotate(0); }
+  54%, 66% { transform: translateX(1.85rem) rotate(360deg); }
+  76% { transform: translateX(0.7rem) rotate(480deg); }
 }
 
 @keyframes bolinho-thread {
-  0%, 35%, 100% { transform: rotate(-18deg) scaleX(1); }
-  55%, 72% { transform: rotate(-28deg) scaleX(1.25); }
+  0%, 43%, 100% { transform: rotate(-18deg) scaleX(1); }
+  54%, 66% { transform: rotate(-32deg) scaleX(1.55); }
+  76% { transform: rotate(-23deg) scaleX(1.2); }
 }
 
 @keyframes bolinho-blink {
-  0%, 91%, 100% { opacity: 0; }
-  93%, 97% { opacity: 1; }
+  0%, 70%, 100% { opacity: 0; }
+  73%, 76% { opacity: 1; }
 }
 
 @media (max-width: 640px) {
