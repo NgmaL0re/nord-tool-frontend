@@ -22,7 +22,32 @@
   height: auto;
   overflow: visible;
   filter: drop-shadow(2px 3px 0 rgb(15 23 42 / 0.2));
-  animation: bolinho-play 3.8s steps(8, end) infinite;
+  animation:
+    bolinho-play 3.8s steps(8, end) infinite,
+    bolinho-bounce 3.8s steps(6, end) infinite;
+}
+
+.bolinho-pet__leg {
+  transform-box: fill-box;
+  transform-origin: center bottom;
+}
+
+.bolinho-pet__leg--back {
+  animation: bolinho-leg-back 3.8s steps(4, end) infinite;
+}
+
+.bolinho-pet__leg--front {
+  animation: bolinho-leg-front 3.8s steps(4, end) infinite;
+}
+
+.bolinho-pet__ear {
+  transform-box: fill-box;
+  transform-origin: bottom center;
+  animation: bolinho-ear 3.8s steps(2, end) infinite;
+}
+
+.bolinho-pet__ear:last-of-type {
+  animation-delay: 1.9s;
 }
 
 .bolinho-pet__tail {
@@ -104,6 +129,34 @@
   73%, 76% { opacity: 1; }
 }
 
+@keyframes bolinho-bounce {
+  0%, 18%, 100% { transform: translateY(0); }
+  23%, 30%, 37% { transform: translateY(-1.5px); }
+  26%, 34% { transform: translateY(0); }
+  52%, 65% { transform: translateY(0); }
+  69%, 74% { transform: translateY(-1.5px); }
+  72% { transform: translateY(0); }
+}
+
+@keyframes bolinho-leg-back {
+  0%, 18%, 52%, 65%, 100% { transform: translateY(0); }
+  22%, 30% { transform: translateY(-2px); }
+  26%, 40% { transform: translateY(0); }
+  69%, 74% { transform: translateY(-2px); }
+}
+
+@keyframes bolinho-leg-front {
+  0%, 18%, 52%, 65%, 100% { transform: translateY(0); }
+  26%, 34% { transform: translateY(-2px); }
+  30%, 45% { transform: translateY(0); }
+  71%, 76% { transform: translateY(-2px); }
+}
+
+@keyframes bolinho-ear {
+  0%, 45%, 100% { transform: rotate(0deg); }
+  48% { transform: rotate(-6deg); }
+}
+
 @media (max-width: 640px) {
   .bolinho-pet {
     right: 0.25rem;
@@ -119,5 +172,7 @@
   .bolinho-pet__paw,
   .bolinho-pet__blink,
   .bolinho-pet__yarn,
-  .bolinho-pet__thread { animation: none; }
+  .bolinho-pet__thread,
+  .bolinho-pet__leg,
+  .bolinho-pet__ear { animation: none; }
 }
